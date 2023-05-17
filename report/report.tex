@@ -206,6 +206,23 @@ TODO: Confidence 2/10: For kort, dårligt beskrevet etc.
 The Next predicate is the predicate which chooses what should happen in the next state. Here we say that for some process $p$, we can either check if the leader is alive, handle any messages or kill the leader. Killing the leader is only a function to ensure the proper functioning of the spec.
 
 \subsection{Invariants and Properties}
+TODO: Confidence: 1/10, jeg har glemt at push nye variablenavne
+
+To ensure that, while running the spec, we do not use insufficient or invalid data, we introduce invariants. One of these invariants is the TypeOK invariant, which acts as a sort of type checker for the program.
+
+\textbf{TypeOK} \\
+\begin{lstlisting}
+TypeOK == \A p \in Processes :
+        /\ State[p].ID \in Processes
+        /\ State[p].Status \in {"Active", "Dead"}
+        /\ State[p].Leader \in Processes
+        /\ State[p].ElectionInProgress \in BOOLEAN
+        /\ MBox \in [Processes -> Seq(Messages)]
+\end{lstlisting}
+
+TypeOK makes sure that for each process, the ID, Status, Leader, Participating and Message Box is valid. It does this by making sure that the value is part of a predefined set (such as ProcessID being the set of processes.)
+
+\textbf{Other Invariants} \\
 
 
 
