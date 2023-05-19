@@ -1,0 +1,9 @@
+#+title: Thoughts
+
+- [ ] Refer to algorithm while talking about code
+- [ ] Talk about thought process while talking code?
+  - So structure would be something like: ...Beginning...->Algorithm->Thought Process->Code Explanation with references to thought process and algorithm.
+
+
+- [ ] Why is OneLeader working?
+- [ ]State[p].ID \in ProcessID is redundant, another way to check it?

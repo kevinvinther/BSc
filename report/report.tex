@@ -1,37 +1,57 @@
-\documentclass{article}
+\documentclass{report}
 
 \usepackage{listings}
 \usepackage{ amssymb }
 \usepackage{graphicx}
 \graphicspath{ {./images/} }
 \usepackage{lipsum}
+\begin{titlepage}
+\begin{center}
+       \vspace*{1cm}
 
-\title{Formal Verification}
-\author{Kevin Joshua Vinther}
-\date{\today}
+       \textbf{Formal Verification of Distributed Leader Election Algorithms with Model Checking}
 
+       \vspace{0.5cm}
+
+       \vspace{1.5cm}
+
+       Student\\
+       \textbf{Kevin Joshua Vinther}\\
+       \textit{kevin20@student.sdu.dk}
+       \vspace{0.5cm}
+       \\
+       Supervisor\\
+       \textbf{Marco Peressotti}\\
+       \textit{Peressotti@imada.sdu.dk}
+
+
+       \vfill
+
+       \vspace{0.8cm}
+
+   \end{center}
+\end{titlepage}
 \begin{document}
 
-\maketitle
 
 
 %%%%%%%%%%%
 % TODO: Få selve speccen af Bully Algoritmen ind, og referer til den løbende
 %%%%%%%%%%%
 
-\section{Introduction}
+\chapter{Introduction}
 TODO: Confidence 1/10
 
 Distributed Systems are very important...
 
 A problem in Distributed Systems is the problem of leader election...
 
-\section{Overview}
+\chapter{Overview}
 TODO: Confidence 1/10
 
 This is the main body section.
 
-\subsection{Terminology}
+\section{Terminology}
 TODO: Confidence 1/10
 
 Before explaining much of the implementation as well as how the algorithms works, it is improtant to show some of the terminology.
@@ -41,7 +61,7 @@ Overlay...
 Logical...
 Classifications...
 
-\subsection{Leader Election}
+\section{Leader Election}
 TODO: Confidence 3/10
 
 Leader Election is a type of algorithm in Distributed Systems, whose aim is to elect a leader from processes in a distributed systems. This is crucial for when a leader dies. The main challenge in leader election is that any process can die at any time, including the leader. Thus, if a leader dies, a new leader must be agreed upon by the other processes.
@@ -55,29 +75,39 @@ Leader election assumptions:
 
 
 
-\subsection{Bully Algorithm}
+\section{Bully Algorithm}
 TODO: Confidence 3/10
 
 The Bully Algorithm is an algorithm that solves the Leader Election problem. In the bully algorithm, we assume a complete undirected graph.
 
-\begin{lstlisting}
 
-\end{lstlisting}
+When a process P recovers from failure, or the failure detector indicates that the current leader has failed, P performs the following actions:
 
-\subsection{Ring Algorithm}
+\begin{enumerate}
+\item If P has the highest process ID, it sends a Victory message to all other processes and becomes the new leader. Otherwise, P broadcasts an Election message to all other processes with higher process IDs than itself.
+\item If P receives no alive after sending an Election message, then it broadcasts a Victory message to all other processes and becomes the leader.
+\item If P receives an alive from a process with a higher ID, it sends no further messages for this election and waits for a Victory message. (If there is no Victory message after a period of time, it restarts the process at the beginning.)
+\item If P receives an Election message from another process with a lower ID it sends an alive message back and if it has not already started an election, it starts the election process at the beginning, by sending an Election message to higher-numbered processes.
+\item If P receives a victory message, it treats the sender as the leader.
+\end{enumerate}
+
+\section{Ring Algorithm}
 TODO: Confidence 3/10
 
 The Ring Algorithm is an algorithm that solves the Leader Election problem. In the bully algorithm, we assume a complete directed ring.
 
 
-\subsection{TLA+}
+\section{TLA+}
 TODO: Confidence 5/10
 
 TLA+ (Temporal Language of Actions Plus) is a language for modeling specifications, and widely used for proving algorithms. It has proven to be a very useful tool for proving algorithms, because of they way the language works, by forcing you to write mathematically correct implementations, that can be tested in every possible state.
 
-\section{Bully Algorithm}
+\chapter{Bully Algorithm}
 
-\subsection{Setup}
+\section{Converting to TLA+}
+\lipsum[1]
+
+\section{Setup}
 TODO: Confidence 6/10: Formatting, proof-reading, ``we'', articulation, maybe some of this is not necessary? too much explanation?
 
 The ``setup'' of the implementation consists of setting up the variables and constants we use, along with setting the initial values of the code.
@@ -102,7 +132,7 @@ With this format, we can very simply access information from any process at the 
 
 The ease of access here makes the rest of the implementation very readable.
 
-\subsection{Sending Messages}
+\section{Sending Messages}
 
 TODO: Confidence 4/10: General formatting, bad formulation etc.
 
@@ -139,7 +169,7 @@ HigherIDs(p) == {q \in ProcessID: q > p}
 As one may think, these functions are quite different. The SendAlive function just sends a message without doing anything else. SendVictory sends a victory to every active process that is not itself, and SendElection sends only to higher process IDs.
 \textbf{TODO: Skriv hvorfor}
 
-\subsection{Receiving Messages}
+\section{Receiving Messages}
 TODO: Confidence 5/10: Måske fungerer referencer til algoritme ikke helt?
 
 \noindent\fbox{%
@@ -181,7 +211,7 @@ TODO: Confidence 1/10: Dårlige forklaringer, dårlig grammatik etc.
 
 This function checks for new messages in a process' message box. It does this by looking at the first entry (the head) of the message box of process $p$. The first case is to clean up in case the process is dead. The only thing that is done, is to remove the message from the dead process. However, in the case where the process is not dead, the function looks at the contents of the message. It then calls the appropriate function depending the contents. After calling the function it removes the latest message by modifying the messagebox to be the tail.
 
-\subsection{Checking the leader condition}
+\section{Checking the leader condition}
 TODO: COnfidence 2/10: DÅrlig grammatik, dårlig formulering etc.\\
 \noindent\fbox{%
     \parbox{\textwidth}{%
@@ -190,10 +220,10 @@ TODO: COnfidence 2/10: DÅrlig grammatik, dårlig formulering etc.\\
 }
 
 This function checks whether or not the current leader is dead. It only does this, if there is the process checking is not participating in an election (meaning that we assume there is no election). We then use the helper function defined up in the Sends, to see if the process has the highest ID. If this is the case, we just send a victory message, otherwise we send an election message out, and change the process to be participating in the election.
-We can ``just'' say if the process has the highest ID, because we assume \textbf{hvad er det nu vi assumer siden vi bare kan sige det her? noget med at vi ved hvis processer er døde, vi ved bare ikke hvordan}
+We can ``just'' say if the process has the highest ID, because we assume \textbf{TODO: hvad er det nu vi assumer siden vi bare kan sige det her? noget med at vi ved hvis processer er døde, vi ved bare ikke hvordan}
 This is also the reason this function is used, rather than not getting a response and then assuming the leader process is dead.
 
-\subsection{Next predicate and dying leader}
+\section{Next predicate and dying leader}
 TODO: Confidence 2/10: For kort, dårligt beskrevet etc.
 
 \noindent\fbox{%
@@ -205,19 +235,124 @@ TODO: Confidence 2/10: For kort, dårligt beskrevet etc.
 
 The Next predicate is the predicate which chooses what should happen in the next state. Here we say that for some process $p$, we can either check if the leader is alive, handle any messages or kill the leader. Killing the leader is only a function to ensure the proper functioning of the spec.
 
-\subsection{Invariants and Properties}
+\section{Invariants and Properties}
+
+\subsection{Invariants}
+TODO: Confidence 1/10: very very rough draft
 
 
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+\makebox[\textwidth]{\includegraphics[scale=0.49]{typeok.png}}
+\makebox[\textwidth]{\includegraphics[scale=0.49]{t_invariants.png}}
+    }%
+}
 
-\section{Ring Algorithm}
+\textbf{How the invariants are set up:}\\
+The invariants are set up by depending on whether they are checking one process or two processes. If one process is checked, it checks for all processes p, while if they are checking two processes, they check for all processses p and q. Using this way, we make sure that each process gets treated correctly, and that we don't just select a random pair that might work at that moment.
+
+
+Invariants will be checked to be true in every possible state.
+
+Earlier in the report, we talked about TypeOK, as it is the invariant which makes sure that every variable holds legal values for this specification.
+It does this by checking each process in ProcessID (I.e., each process in general) and making sure that they are a part of the correct set.(TODO: FOR PROCESSID THIS IS REDUNDANT). This means that the Condition proprety should either be Active or Dead, the leader should be a legal process id, participating should be a boolean and the messagebox should be a mapping from processid to a sequence of messages.
+
+The OneLeader invariant makes sure that if there exists two leaders, then those two leaders must be the same process.
+% TODO: This doesn't work, does it?
+%
+UniqueID makes sure that no process will have the same id.
+
+Pariticpating makes sure that if a process is participating, it is not the leader itself.
+
+
+\subsection{Properties}
+..Explain what properties are...
+
+There are two kinds of temporal properties: safety properties, and liveness properties. Safety properties make sure that the system doesn't do bad things, and liveness makes sure our system always does a good thing.\cite{https://learntla.com/core/temporal-logic.html}
+
+
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+\makebox[\textwidth]{\includegraphics[scale=0.435]{properties.png}}
+    }%
+}
+
+ElectionTerminationImpliesSameLeader is a safety property that ensures that when an election is done, everyone has the same leader.
+
+HighestAliveProcessIsLeader is a safety property, tghat ensures that if a process is not participating in an election, then the highest alive process should be the leader.
+
+ElectionWillEnd is a safety property that ensures that ensures that
+
+
+\chapter{Ring Algorithm}
+
+...Also called LCR
+
+\section{Thought Process}
 
 \lipsum[1]
 
-\section{Evaluation}
+\textbf{Similarities to Bully Algorithm}
 
-\lipsum[2]
+The Ring Algorithm and the Bully Algorithm are both algorithms for leader election, and thus many of the core functions and models can be reused. These include invariants, properties, processes, messages and more.
 
-\section{Conclusion}
+\section{Setup}
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+\makebox[\textwidth]{\includegraphics[scale=0.335]{ring_setup.png}}
+    }%
+}
+
+This setup is a lot like the setup of the Bully Algorithm, except the Message function is different. This is solely a syntactic change. In the Ring algorithm each message holds an ``ID'', which is usually depicted as PROBE(ID) or SELECTED(ID). Thus, the change is made to reflect this, and also to avoid confusion with how the BullyAlgorithm handles it, where the process is the sender of the message, not the id. The sender isn't needed in the Ring Algorithm, as it is a ring structure and sends the message to the neighbour.
+
+\section{Helper functions}
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+\makebox[\textwidth]{\includegraphics[scale=0.335]{ring_helpers.png}}
+    }%
+}
+
+The helper functions are quite alike the helper functions in the bully algorithm as well, with the most noticable differences being the SendMessage and Neighbour functions.
+The reason I decided for having a SendMessage function in the Ring Algorithm and not in Bully Algorithm, is that it aesthetically looks much prettier in the ring algorithm, and less cluttered, while it would only make it look more cluttered in the Bully Algorithm.
+The neighbour function is a helper function for finding the right-side neighbour of the process. Since the algorithm assumes a ring structure, the right-hand neighbour is just the process id plus one. However, since a leader might die, this is divided with the MaxAliveID, to make sure that if the right hand neighbour is dead, it is sent to the lowest id instead. TODO: this should probably be changed, is in the real algorithm any process can die at any time.
+
+\section{Event Handlers}
+In the Ring algorithm there are two main events: receiving the Probe message and receiving the Selected message.
+
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+\makebox[\textwidth]{\includegraphics[scale=0.38]{ring_receive.png}}
+    }%
+}
+
+\textbf{ProcessProbe}\\
+According to the algorithm, in case a process receives a probe message, and the process id is lower than the id in the Probe message, the message is sent on the the next process. We do this using the SnedMessage and Neighbour helper functions. TODO: THIS IS WHERE THE PROBLEM HAPPENS PROBABLY. In the case of the ID being the same as the process ID, we assume that they are the new leader, and a SELECTED message with that process ID is sent, as well as their own leading being set to be themself. If the process ID is greater than the ID in the message, we do nothing, as is specified by the algorithm.
+
+\textbf{ProcessSelected}\\
+ProcessSelected simply checks if the process ID is equal to the ID of the Selected message. If so, the process is declared the election is done. Otherwise, the message is sent on, to keep declaring the new leader.
+
+
+\section{HandleMessages}
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+\makebox[\textwidth]{\includegraphics[scale=0.33]{ring_handle.png}}
+    }%
+}
+TODO: Change image
+
+HandleMessage is mostly identical to the HandleMessage functionp from the bully algorithm, except with changed messages, and in case of the message being a probe and the process' \textit{participating} field being false, we change it to true.
+
+\section{Checking The Leader Condition}
+
+
+
+\chapter{Evaluation}
+
+
+
+\chapter{Conclusion}
+
+...While the Bully Algorithm worked fine, the Ring Algorithm did not.
 
 \lipsum[3]
 

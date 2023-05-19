@@ -6,8 +6,7 @@
    (add-to-list 'LaTeX-verbatim-macros-with-delims-local "lstinline")
    (TeX-run-style-hooks
     "latex2e"
-    "article"
-    "art10"
+    "rep10"
     "listings"
     ""
     "amssymb"
