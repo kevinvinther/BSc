@@ -1,20 +1,53 @@
 \documentclass{report}
 
+\usepackage{tlatex}
 \usepackage{listings}
-\usepackage{ amssymb }
 \usepackage{graphicx}
 \graphicspath{ {./images/} }
 \usepackage{lipsum}
+
+\usepackage[most]{tcolorbox}
+\usepackage{fontawesome}
+\usepackage{xcolor}
+
+\usepackage{multicol}
+
+\usepackage{algorithm2e}
+
+\definecolor{mycolor}{RGB}{242,87,87}
+\definecolor{offwhite}{RGB}{248,236,224}
+\newcommand*{\sans}{\fontfamily{lmss}\selectfont}
+
+\newtcolorbox{callout}{
+  enhanced,
+  colback=mycolor,
+  coltext=offwhite, % color of the text
+  boxrule=0pt,
+  leftrule=3pt,
+  colframe=white,
+  sharp corners,
+  left=20pt,
+  fontupper=\sffamily, % change font to sans-serif
+  overlay unbroken and first={
+    \node[anchor=west, xshift=5pt, text=offwhite] at (frame.west) {\faBellO}; % color of the icon
+  },
+}
+
+
+
 \begin{titlepage}
 \begin{center}
        \vspace*{1cm}
 
-       \textbf{Formal Verification of Distributed Leader Election Algorithms with Model Checking}
+       \textbf{Formal Verification of Distributed Leader Election Algorithms with Model Checking}\\
+       \vspace{0.4cm}
+       June 1, 2023
 
        \vspace{0.5cm}
 
        \vspace{1.5cm}
 
+       \begin{multicols}{2}
        Student\\
        \textbf{Kevin Joshua Vinther}\\
        \textit{kevin20@student.sdu.dk}
@@ -23,6 +56,7 @@
        Supervisor\\
        \textbf{Marco Peressotti}\\
        \textit{Peressotti@imada.sdu.dk}
+       \end{multicols}
 
 
        \vfill
@@ -33,55 +67,87 @@
 \end{titlepage}
 \begin{document}
 
-
-
-%%%%%%%%%%%
-% TODO: Få selve speccen af Bully Algoritmen ind, og referer til den løbende
-%%%%%%%%%%%
+\tableofcontents
 
 \chapter{Introduction}
-TODO: Confidence 1/10
+\begin{callout}
+  TODO: Confidence 0/10:
 
-Distributed Systems are very important...
-
-A problem in Distributed Systems is the problem of leader election...
+  What is the significance of Leader Election? What is the significance of TLA+? What do you solve?
+\end{callout}
 
 \chapter{Overview}
+\begin{callout}
 TODO: Confidence 1/10
+\end{callout}
 
 This is the main body section.
 
 \section{Terminology}
+\begin{callout}
 TODO: Confidence 1/10
+\end{callout}
 
-Before explaining much of the implementation as well as how the algorithms works, it is improtant to show some of the terminology.
+
+Before explaining much of the implementation as well as how the algorithms works, it is important to show some of the terminology.
 
 Failure models...
 Overlay...
 Logical...
 Classifications...
 
-\section{Leader Election}
-TODO: Confidence 3/10
+\begin{callout}
+  is this necessary? maybe explaining when using words would be better... probably
+  \end{callout}
 
-Leader Election is a type of algorithm in Distributed Systems, whose aim is to elect a leader from processes in a distributed systems. This is crucial for when a leader dies. The main challenge in leader election is that any process can die at any time, including the leader. Thus, if a leader dies, a new leader must be agreed upon by the other processes.
-Leader election assumptions:
+\section{Leader Election}
+\begin{callout}
+TODO: Confidence 3/10
+\end{callout}
+
+In several algorithms for distributed systems, a process may posses the role of the \textit{leader}. A leader may be required in a system because algorithms typically are not completely symmetrical, and thus the leader can take the lead in initiating the algorithm. \cite{kshemkalyani2011distributed}
+
+The aim of a leader election algorithm, thus, is to elect a leader from a set of processes. If this leader dies, it is the algorithms job to find a new leader.
+
+This \textit{report?} will search to implement two leader election algorithms: The \textit{Bully Algorithm} and the \textit{Ring Algorithm}\footnote{Also known as the Lelang, Chang and Roberts (LCR) algorithm, but commonly referred to as the Ring algorithm, as will be done in this \texit{report?}}
+
+Both of the algorithms assume that:
 \begin{itemize}
-        \item All nodes
-        \item Fail-stop model
+  \item The network is reliable. Messages do not get lost.
+  \item Nodes may fail at any time, including the leader.
+  \item Fail-stop model. Failed nodes are removed from the system forever.
 \end{itemize}
 
-
-
+\begin{callout}
+  maybesomething about how they are both on graphs?
+  \end{callout}
 
 
 \section{Bully Algorithm}
+\begin{callout}
 TODO: Confidence 3/10
+\end{callout}
 
-The Bully Algorithm is an algorithm that solves the Leader Election problem. In the bully algorithm, we assume a complete undirected graph.
+The bully algorithm is an algorithm which solves the problem of leader election. The bully algorithm assumes a complete undirected graph.\cite{marco}
+\textit{Should I describe what a complete undirected graph is?}
 
+\begin{callout}
+Should I be describing this?
+\end{callout}
 
+The messages in the algorithm are:
+\begin{itemize}
+  \item \textit{election}: announce an election
+  \item \textit{alive}: response to \textit{election}
+  \item \textit{victory}: sent by winner to announce victory
+\end{itemize}
+
+\begin{callout}
+  Maybe this should be a figure? Easier to refer to
+  \end{callout}
 When a process P recovers from failure, or the failure detector indicates that the current leader has failed, P performs the following actions:
+
+
 
 \begin{enumerate}
 \item If P has the highest process ID, it sends a Victory message to all other processes and becomes the new leader. Otherwise, P broadcasts an Election message to all other processes with higher process IDs than itself.
@@ -91,86 +157,157 @@ When a process P recovers from failure, or the failure detector indicates that t
 \item If P receives a victory message, it treats the sender as the leader.
 \end{enumerate}
 
+
+
+
 \section{Ring Algorithm}
+\begin{callout}
 TODO: Confidence 3/10
+\end{callout}
 
 The Ring Algorithm is an algorithm that solves the Leader Election problem. In the bully algorithm, we assume a complete directed ring.
 
 
 \section{TLA+}
-TODO: Confidence 5/10
+\begin{callout}
+  write something about distributed systems
+\end{callout}
 
 TLA+ (Temporal Language of Actions Plus) is a language for modeling specifications, and widely used for proving algorithms. It has proven to be a very useful tool for proving algorithms, because of they way the language works, by forcing you to write mathematically correct implementations, that can be tested in every possible state.
 
 \chapter{Bully Algorithm}
 
 \section{Converting to TLA+}
-\lipsum[1]
+Since there is no specific pseudocode to the bully algorithm, but rather an instruction set for what process $p$ should do when it wakes up, it has more so been a process of modelling from thoughts rather than converting from pseudocode.
+
+\subsection{Deviations from pseudocode}
+The second point in the algorithm described earlier states that, if process $p$ receives no \textit{alive} message after sending an Election message, then it broadcasts an \textit{victory} message to all other processes. Since TLA$^{+}$ does not allow for waiting a specified amount of time, I have made a major modification to the algorithm. Instead of waiting to see, it immediately checks if process P is the process with the highest ID alive, and broadcasts a \textit{victory} message if this is the case. We allow ourself this because \textit{fail-stop model?} assumes that all processes will know the failure of other processes, but it is not specified how. Therefore, we can assume that the process will know that it is the highest process. This is also done in the beginning of the algorithm, when a process checks if a leader is dead. However, the rest of the implementation is as true to the pseudocode \textit{can I call it that?} as possible.
 
 \section{Setup}
+
+\begin{callout}
 TODO: Confidence 6/10: Formatting, proof-reading, ``we'', articulation, maybe some of this is not necessary? too much explanation?
+\end{callout}
 
-The ``setup'' of the implementation consists of setting up the variables and constants we use, along with setting the initial values of the code.
+\begin{figure}
+\tlatex
+\@x{}\moduleLeftDash\@xx{Setup}\moduleRightDash\@xx{}%
+\@pvspace{8.0pt}%
+\@x{ {\EXTENDS} Naturals ,\, FiniteSets ,\, Sequences}%
+\@pvspace{8.0pt}%
+\@x{ {\CONSTANT} N}%
+\@pvspace{8.0pt}%
+\@x{ {\ASSUME} N \.{\in} Nat}%
+\@pvspace{8.0pt}%
+\@x{ ProcessID \.{\defeq} 1 \.{\dotdot} N}%
+\@pvspace{8.0pt}%
+\@x{ {\VARIABLES} State ,\, MessageBox}%
+\@pvspace{8.0pt}%
+ \@x{ Message \.{\defeq} ProcessID \.{\times} \{\@w{ELECTION} ,\,\@w{ALIVE}
+ ,\,\@w{VICTORY} \}}%
+\@pvspace{8.0pt}%
+ \@x{ Init \.{\defeq} \.{\land} State \.{=} [ p\@s{9.46} \.{\in} ProcessID
+ \.{\mapsto}}%
+\@x{\@s{109.06} [ ID \.{\mapsto} p ,\,}%
+\@x{\@s{109.06} Condition \.{\mapsto}\@w{Active} ,\,}%
+\@x{\@s{109.06} Leader \.{\mapsto} N ,\,}%
+\@x{\@s{109.06} Participating \.{\mapsto} {\FALSE} ] ]}%
+ \@x{\@s{35.70} \.{\land} MessageBox \.{=} [ p \.{\in} ProcessID \.{\mapsto}
+ {\langle} {\rangle} ]}%
+\fl{}\bottombar\cl{}
 
-\noindent\fbox{%
-    \parbox{\textwidth}{%
-\makebox[\textwidth]{\includegraphics[scale=0.5]{setup.png}}
-    }%
-}
+\caption{Setup for the Bully Algorithm}
+\end{figure}
 
+Before modeling the behavior of the specification, we set up the constants, variables and types \textit{types? better explanation needed}. Looking at the specification for the algorithm, we need to model processes and messages.
 
-This code segment first defines a natural number constant, $N$, which chooses the number of processes in the system. The specific number $N$ is first chosen in the modeling stage, where you check the model. We then model ID's of the processes by simply making a range from 1 to and including $N$, meaning that a process can have any natural number ID up including $N$.
-
-The variables State and MessageBox are then declared, so that we can implement their initial values in the \textit{init} function.
-
-Before initializing, we declare that a message is the cross product between a process ID and its message ``ELECTION'', ``ALIVE'' or ``VICTORY''. This is used in the TypeOK invariant, to make sure that a message is a correct message.
-
-In the \textit{init} function we initialize the \textit{State} and \textit{MessageBox} variables. We set State to be a tuple of processes which map to a record of the meta-information of the process. The record which each process maps to has the fields ID, Condition, Leader and Participating. The ID is set to be the process ID, $p$. We set the condition to be ``Active'', because we want each process to be active in the initial state. The ``condition'' field could be set to be ``Dead'', in which case a leader election would immediately start. We set the Leader field to be the highest process, N. We also set the \textit{Participating} field to be FALSE, as there is no election ongoing at the initial state.
-We initialize the MessageBox simply by mapping each process id to an empty tuple. Thus, we end with a tuple of tuples.
-
-With this format, we can very simply access information from any process at the current state. The condition for example, can be accessed simply by evaluating {\textit{State[$p$].Condition}}, where $p$ is the process ID. Similarly, we can access messages from a process' message box easily with \textit{(MessageBox[p])[1]} for the process ID of the sender, and \textit{(MessageBox[p])[2]} for the contents of the message.
-
-The ease of access here makes the rest of the implementation very readable.
+The algorithm assumes a complete undirected graph. We model this by creating a \textbf{State} variable, which contains a record of all \textit{processes} and their fields. We define the \textbf{State} variable to be a sequence of records, each of which hold the following metadata in its fields:
+\begin{itemize}
+    \item \textit{ID}: The process has a unique ID. $ID \in ProcessID$, where $ProcessID$ is the total number of processes, defined as a range from 1 to the natural number N.
+    \item \textit{Condition}: A process is either dead or alive (called \textit{active}). Due to the assumptions of the algorithm we assume that each process knows when another process is dead. Condition $\in$ \{{\sans"Dead", "Active"}\}
+    \item \textit{Leader}: The process should know who it's leader is. The leader may be the process itself. $Leader \in ProcessID$
+    \item \textit{Participating}: The process is either participating in the election or not. This information is only used for the process itself. $Participating \in$ {\small \textsc{Boolean}}
+\end{itemize}
+Furthermore, we define a sequence, \textbf{MessageBox} which holds every processes received messages. The MessageBox maps from each process, $p$ initially to an empty tuple, and later on to a sequence of tuples. These tuples are the \textbf{Message}s. We define a \textbf{Message} as ProcessID $\times$ \{{\sans ``ELECTION'', ``ALIVE'', ``VICTORY''}\}, thus an example of an {\sans ``ELECTION''} message from process $1$ is: $\langle1,$ {\sans ``ELECTION''} $\rangle$
 
 \section{Sending Messages}
 
-TODO: Confidence 4/10: General formatting, bad formulation etc.
 
-\noindent\fbox{%
-    \parbox{\textwidth}{%
-\makebox[\textwidth]{\includegraphics[scale=0.33]{sending.png}}
-    }%
-}
+\begin{figure}
+  \tlatex
+\@x{}\moduleLeftDash\@xx{Sending Messages}\moduleRightDash\@xx{}%
+\@x{ SendAlive ( p ,\, q ) \.{\defeq}}%
+ \@x{\@s{16.4} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT} {\bang} [ q ]
+ \.{=} Append ( MessageBox [ q ] ,\, {\langle} p ,\,\@w{ALIVE} {\rangle} ) ]}%
+\@pvspace{16.0pt}%
+\@x{ SendVictory ( p ) \.{\defeq}}%
+ \@x{\@s{16.4} \.{\land} MessageBox \.{'} \.{=} [ q \.{\in} ProcessID
+ \.{\mapsto}}%
+ \@x{\@s{48.01} {\IF} q \.{\neq} p \.{\land} State [ q ] . Condition
+ \.{=}\@w{Active}}%
+ \@x{\@s{48.01} \.{\THEN} Append ( MessageBox [ q ] ,\, {\langle} p
+ ,\,\@w{VICTORY} {\rangle} )}%
+\@x{\@s{48.01} \.{\ELSE} MessageBox [ q ] ]}%
+\@pvspace{8.0pt}%
+\@x{ SendElection ( p ) \.{\defeq}}%
+\@x{\@s{16.4} MessageBox \.{'} \.{=} [ q \.{\in} ProcessID \.{\mapsto}}%
+ \@x{\@s{32.8} {\IF} q \.{\in} HigherIDs ( p ) \.{\land} State [ q ] .
+ Condition \.{=}\@w{Active}}%
+ \@x{\@s{32.8} \.{\THEN} Append ( MessageBox [ q ] ,\, {\langle} p
+ ,\,\@w{ELECTION} {\rangle} )}%
+\@x{\@s{32.8} \.{\ELSE} MessageBox [ q ] ]}%
+\fl{}\bottombar\cl{}
 
-In general, with the way messages are modeled, we can send a message as simply as this:
+\caption{The \textit{sender} functions}
+\end{figure}
+
+\begin{callout}
+  How much of this should actually be described? Should this section maybe be after the explanation of handlers?
+  \end{callout}
+
+Along with the correct modeling of processes, the most important functionality in the algorithm is the sending, receiving and handling of messages.
+
+We earlier defined the \textbf{MessageBox} to be a sequence of \textbf{Message}s. This makes the handling of messages extremely convenient. One of the core operations we make with messages are sending them. To send a message from process $p$ to process $q$ with the contents {\sans ELECTION}, we simply append the tuple $\langle p, $ {\sans ``ELECTION''} $\rangle$ to \textit{MessageBox[q]}. In TLA$^{+}$ this is done like so:
 \begin{lstlisting}
 MessageBox'
-    = [MessageBox EXCEPT ![q] =
-       Append(MessageBox[q], <<p, ''MESSAGE'')]
+     = [MessageBox EXCEPT ![q] = Append(<<p, ''ELECTION''>>)]
 \end{lstlisting}
+This defines the MessageBox variable to have $\langle p, $ {\sans ``ELECTION''} $\rangle$ appended to \textit{MessageBox[q]} in the next state.
 
-This simply updates the MessageBox tuple for the receiving process, $q$ with a message sent from $p$ with the contents ``MESASAGE''.
+\begin{callout}
+  In earlier section, maybe write about why we have modelled the messages liket his, rather than when using them? Why do we have sender e.g.
+  \end{callout}
 
+  As discussed earlier, there are three different messages in the bully algorithm: \textit{alive}, \textit{victory}, and \textit{election}.
 
-\textbf{SendAlive}\\
-SendAlive sends a message from process $p$ to process $q$ with the contents ``ALIVE''. The primary reason for this function is to help readability.
+\begin{callout}
+Is the next section necessary or overflødig?
+\end{callout}
 
-\textbf{SendVictory}\\
-SendVictory sends a ``VICTORY'' message to every process with the condition ``Active'' which is not the process itself. The part that specifies that the receiving process should be active is not a necessity and could be left out without changing the functionality of the specification. The reason this is not done, is because it helps with a clean MessageBox. We can do this, because we assume \textbf{???? det der hvor processerne ved hvad der sker.}
-Furthermore, the process $p$ which sends the message also sets its own leader to be itself, and its participation status to FALSE. Thus concluding it's own election, by assigning a new leader and not participating anymore.
+The \textit{alive} message is only sent in a case where a process receives an \textit{election} message from a process with a lower id. Thus, no additional work is needed other than process $q$ should receive an \textit{alive} message from process $p$. This job is done by the \textit{SendAlive} function.
 
-\textbf{SendElection}
-SendElection sends the ``ELECTION'' message to all processes with a higher id than the sender. To do this, it uses a helper function HigherIDs which is defined as such:
-\begin{lstlisting}
-HigherIDs(p) == {q \in ProcessID: q > p}
-\end{lstlisting}
+The \textit{victory} message is sent to all processes except for the sender. Therefore \textit{SendVictory} sends a \textit{victory} message to all processes except the sender. Note that it only sends to processes that are active. We can do this, because we assume a \textit{fail-stop? i forgot} model, meaning that we know when processes die.
+\begin{callout}
+Why can't I just say $q \in (1..MaxAliveID $\textbackslash$ p)$?
+\end{callout}
 
-\textbf{Differences in the send functions}\\
-As one may think, these functions are quite different. The SendAlive function just sends a message without doing anything else. SendVictory sends a victory to every active process that is not itself, and SendElection sends only to higher process IDs.
-\textbf{TODO: Skriv hvorfor}
+\begin{figure}
+  \tlatex
+
+\@x{}\moduleLeftDash\@xx{HigherIDs}\moduleRightDash\@xx{}%
+ \@x{ HigherIDs ( p ) \.{\defeq} \{ q \.{\in} 1 \.{\dotdot} MaxAliveID \.{:} q
+ \.{>} p \}}%
+\fl{}\bottombar\cl{}
+\label{higherids}
+  \caption{Function which returns all IDs higher than $p$}
+\end{figure}
+
+  Similar to the \textit{victory} message, the \textit{election} message is sent to a select group of processes. This time it's all processes with a higher ID than $p$. This is achieved using a helper function, \textit{HigherIDs}, which takes argument $p$ and gives a list of all processes with a higher ID than $p$ (see figure \ref{higherids}).
 
 \section{Receiving Messages}
+\begin{callout}
 TODO: Confidence 5/10: Måske fungerer referencer til algoritme ikke helt?
+\end{callout}
 
 \noindent\fbox{%
     \parbox{\textwidth}{%
@@ -201,7 +338,9 @@ ReceiveVictory changes the process' leader to be q.
 
 
 \subsection{Handling Messages}
+\begin{callout}
 TODO: Confidence 1/10: Dårlige forklaringer, dårlig grammatik etc.
+\end{callout}
 
 \noindent\fbox{%
     \parbox{\textwidth}{%
@@ -224,7 +363,9 @@ We can ``just'' say if the process has the highest ID, because we assume \textbf
 This is also the reason this function is used, rather than not getting a response and then assuming the leader process is dead.
 
 \section{Next predicate and dying leader}
+\begin{callout}
 TODO: Confidence 2/10: For kort, dårligt beskrevet etc.
+\end{callout}
 
 \noindent\fbox{%
     \parbox{\textwidth}{%
@@ -235,10 +376,6 @@ TODO: Confidence 2/10: For kort, dårligt beskrevet etc.
 
 The Next predicate is the predicate which chooses what should happen in the next state. Here we say that for some process $p$, we can either check if the leader is alive, handle any messages or kill the leader. Killing the leader is only a function to ensure the proper functioning of the spec.
 
-\section{Invariants and Properties}
-
-\subsection{Invariants}
-TODO: Confidence 1/10: very very rough draft
 
 
 \noindent\fbox{%
@@ -312,6 +449,9 @@ This setup is a lot like the setup of the Bully Algorithm, except the Message fu
     }%
 }
 
+
+$$2+2 = 4$$
+$2+2=4$
 The helper functions are quite alike the helper functions in the bully algorithm as well, with the most noticable differences being the SendMessage and Neighbour functions.
 The reason I decided for having a SendMessage function in the Ring Algorithm and not in Bully Algorithm, is that it aesthetically looks much prettier in the ring algorithm, and less cluttered, while it would only make it look more cluttered in the Bully Algorithm.
 The neighbour function is a helper function for finding the right-side neighbour of the process. Since the algorithm assumes a ring structure, the right-hand neighbour is just the process id plus one. However, since a leader might die, this is divided with the MaxAliveID, to make sure that if the right hand neighbour is dead, it is sent to the lowest id instead. TODO: this should probably be changed, is in the real algorithm any process can die at any time.
@@ -354,7 +494,15 @@ HandleMessage is mostly identical to the HandleMessage functionp from the bully 
 
 ...While the Bully Algorithm worked fine, the Ring Algorithm did not.
 
-\lipsum[3]
+\bibliography{bibliography}
+
+\appendix
+
+\chapter{Bully Algorithm Implementation}
+
+
+
+\chapter{Ring Algorithm Implementation}
 
 
 \end{document}

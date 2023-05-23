@@ -4,6 +4,24 @@
 - [ ] Talk about thought process while talking code?
   - So structure would be something like: ...Beginning...->Algorithm->Thought Process->Code Explanation with references to thought process and algorithm.
 
-
-- [ ] Why is OneLeader working?
 - [ ]State[p].ID \in ProcessID is redundant, another way to check it?
+
+- [ ] Should the graph have been modelled? In the Ring algorithm this seems crucial, yet I have given it no thought as I just assumed. If so, how should I reason it?
+
+- [ ] I've realized a pretty big mistake in the Bully algorithm. I try to both send an alive message, and an ELECTION message at the same time. Is there a way to do this?
+  - [ ] Also: Why does SendElection() work? It tries to update multiple times.
+
+#+begin_src tla
+SendElection(p) == \A q \in HigherIDs(p):
+                    /\ State[q].Condition = "Active"
+                    /\ MessageBox' =
+                        [MessageBox EXCEPT ![q] = Append(MessageBox[q], <<p, "ELECTION">>)]
+#+end_src
+
+
+- [ ] How much documentation?
+
+
+- [ ] I have changed the bully algorithm because I found an error. Now, if the process is the highest when it receives an ELECTION it will broadcast a VICTORY. THis is not how it is described in the algorithm, but the algorithm is impossible in TLA.
+
+- [ ] How do I know if it works? I've realized that I just rely on the fact that deadlock = it works, but this is the reason I had such a huge problem with Bully. I have now fixed the problem with the bully algorith, I think, but I still end up in a deadlocked situation where the case is that everyone starts with a victory message, and no elections are sent. I am so confused on what to do.
