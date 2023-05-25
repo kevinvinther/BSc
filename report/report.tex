@@ -17,12 +17,44 @@
 \usepackage{algorithm2e}
 
 \definecolor{mycolor}{RGB}{242,87,87}
+\definecolor{green}{RGB}{123, 224, 173}
+\definecolor{yellow}{RGB}{255, 220, 94}
 \definecolor{offwhite}{RGB}{248,236,224}
 \newcommand*{\sans}{\fontfamily{lmss}\selectfont}
 
 \newtcolorbox{callout}{
   enhanced,
   colback=mycolor,
+  coltext=offwhite, % color of the text
+  boxrule=0pt,
+  leftrule=3pt,
+  colframe=white,
+  sharp corners,
+  left=20pt,
+  fontupper=\sffamily, % change font to sans-serif
+  overlay unbroken and first={
+    \node[anchor=west, xshift=5pt, text=offwhite] at (frame.west) {\faBellO}; % color of the icon
+  },
+}
+
+\newtcolorbox{calloutgreen}{
+  enhanced,
+  colback=green,
+  coltext=offwhite, % color of the text
+  boxrule=0pt,
+  leftrule=3pt,
+  colframe=white,
+  sharp corners,
+  left=20pt,
+  fontupper=\sffamily, % change font to sans-serif
+  overlay unbroken and first={
+    \node[anchor=west, xshift=5pt, text=offwhite] at (frame.west) {\faBellO}; % color of the icon
+  },
+}
+
+\newtcolorbox{calloutyellow}{
+  enhanced,
+  colback=yellow,
   coltext=offwhite, % color of the text
   boxrule=0pt,
   leftrule=3pt,
@@ -84,23 +116,6 @@ TODO: Confidence 1/10
 \end{callout}
 
 This is the main body section.
-
-\section{Terminology}
-\begin{callout}
-TODO: Confidence 1/10
-\end{callout}
-
-
-Before explaining much of the implementation as well as how the algorithms works, it is important to show some of the terminology.
-
-Failure models...
-Overlay...
-Logical...
-Classifications...
-
-\begin{callout}
-  is this necessary? maybe explaining when using words would be better... probably
-  \end{callout}
 
 \section{Leader Election}
 \begin{callout}
@@ -187,8 +202,8 @@ The second point in the algorithm described earlier states that, if process $p$ 
 
 \section{Setup}
 
-\begin{callout}
-TODO: Confidence 6/10: Formatting, proof-reading, ``we'', articulation, maybe some of this is not necessary? too much explanation?
+\begin{calloutgreen}
+  Minor tweaks needed
 \end{callout}
 
 \begin{figure}
@@ -263,7 +278,7 @@ Furthermore, we define a sequence, \textbf{MessageBox} which holds every process
 \caption{The \textit{sender} functions}
 \end{figure}
 
-\begin{callout}
+\begin{calloutyellow}
   How much of this should actually be described? Should this section maybe be after the explanation of handlers?
   \end{callout}
 
@@ -306,40 +321,84 @@ Why can't I just say $q \in (1..MaxAliveID $\textbackslash$ p)$?
 
   Similar to the \textit{victory} message, the \textit{election} message is sent to a select group of processes. This time it's all processes with a higher ID than $p$. This is achieved using a helper function, \textit{HigherIDs}, which takes argument $p$ and gives a list of all processes with a higher ID than $p$ (see figure \ref{higherids}).
 
-\section{Receiving Messages}
+\section{Handling Messages}
 \begin{callout}
 TODO: Confidence 5/10: Måske fungerer referencer til algoritme ikke helt?
 \end{callout}
 
-\noindent\fbox{%
-    \parbox{\textwidth}{%
-\makebox[\textwidth]{\includegraphics[scale=0.50]{receive1.png}}
-\makebox[\textwidth]{\includegraphics[scale=0.51]{receive2.png}} % scale to align
-    }%
-}
 
-These functions take care of handling a message that has been received.
+\begin{figure}
+\tlatex
+\@x{}\moduleLeftDash\@xx{Receive Messages}\moduleRightDash\@xx{}%
+ \@x{ ReceiveAlive ( p )\@s{2.29} \.{\defeq} \.{\land} State [ p ] .
+ Participating \.{=} {\TRUE}}%
+\@y{\@s{0}%
+ Make sure they are already participating
+}%
+\@xx{}%
+ \@x{\@s{89.28} \.{\land} \E\, q \.{\in} HigherIDs ( p ) \.{:} {\langle} q
+ ,\,\@w{ALIVE} {\rangle} \.{\in} MessageBox [ p ]}%
+\@y{\@s{0}%
+ The alive should come from a higher \ensuremath{ID
+}}%
+\@xx{}%
+ \@x{\@s{89.28} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Participating \.{=} {\FALSE} ]}%
+\@y{\@s{0}%
+ No longer participate
+}%
+\@xx{}%
+\@pvspace{8.0pt}%
+ \@x{ ReceiveElectionFromLowerID ( p ,\, q ) \.{\defeq}\@s{4.1} \.{\land}
+ MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}}%
+ \@x{\@s{220.42} {\bang} [ q ] \.{=} Append ( MessageBox [ q ] ,\, {\langle} p
+ ,\,\@w{ALIVE} {\rangle} ) ]}%
+ \@x{\@s{176.51} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Participating \.{=} {\TRUE} ]}%
+\@x{\@s{176.51} \.{\land} \.{\lor} \.{\land} p \.{=} MaxAliveID}%
+\@x{\@s{198.73} \.{\land} SendVictory ( p )}%
+\@x{\@s{187.62} \.{\lor} \.{\land} p \.{\neq} MaxAliveID}%
+\@x{\@s{198.73} \.{\land} SendElection ( p )}%
+\@pvspace{8.0pt}%
+ \@x{ ReceiveElectionFromHigherID ( p ) \.{\defeq} \.{\land} State \.{'} \.{=}
+ [ State {\EXCEPT} {\bang} [ p ] . Participating \.{=} {\TRUE} ]}%
+\@x{\@s{163.51} \.{\land} SendElection ( p )}%
+\@pvspace{8.0pt}%
+ \@x{ ReceiveVictory ( p ,\, q ) \.{\defeq} State \.{'} \.{=} [ State
+ {\EXCEPT} {\bang} [ p ] . Leader \.{=} q ]}%
+\@y{\@s{0}%
+ Set the leader of receiver to \ensuremath{p} sender
+}%
+\@xx{}%
 
-\textbf{ReceiveAlive}\\
-\textit{If P receives an Alive from a process with a higher ID, it sends no further messages for this election and waits for a Victory message. (If there is no Victory message after a period of time, it restarts the process at the beginning.)}
+\fl{}\bottombar\cl{}
 
-This function makes sure that the process that has received the ALIVE message is currently participating in the election, and that the ALIVE message comes from a process with a higher ID. If both of these are true, the process is no longer participating in the election.
+\caption{Message Handlers}
+\end{figure}
 
-\textbf{ReceiveElection}\\
-\textit{If P receives an Election message from another process with a lower ID it sends an ALIVE message back and if it has not already started an election, it starts the election process at the beginning, by sending an Election message to higher-numbered processes.}
-TODO: Måske skal HigherID og LowerID bare forklares for sig selv?
+\begin{calloutyellow}
+Bad formulations
+  \end{calloutyellow}
 
-This function first checks to make sure that the process is not already participating in the election. Then, it sees if the ELECTION message has come from a Lower ID, if this is the case it sends an ``ALIVE'' message to the process, if it is active. Again, making sure it is active is not a necessity, and only here to help with a clean MessageBox.
-% TODO: Grunden til at de andre send funktioner er så kompliceret er fordi at receivesne bliver for clutteret
-TODO: Hvorfor virker den her funktion? Burde den ikke blive FALSE hvis det ikke er fra en election?
+When a process receives a message, the correct behavior is determined by the \textit{HandleMessages} function.
 
-\textbf{ReceiveVictory}\\
-\textit{If P receives a Victory message, it treats the sender as the coordinator.}
+According to the pseudocode, when a process $p$ receives a message, depending on the type of message there are multiple things to do.
 
-ReceiveVictory changes the process' leader to be q.
+Points 3, 4, and 5 describe what to do when receiving messages:
+
+\begin{callout}
+Maybe make the pseudocode a figure and refer to that instead?
+  \end{callout}
+\begin{enumerate}
+  \setcounter{enumi}{2}
+  \item If P receives an alive from a process with a higher ID, it sends no further messages for this election and waits for a Victory message. (If there is no Victory message after a period of time, it restarts the process at the beginning.)
+  \item If P receives an Election message from another process with a lower ID it sends an alive message back and if it has not already started an election, it starts the election process at the beginning, by sending an Election message to higher-numbered processes.
+  \item If P receives a victory message, it treats the sender as the leader.
+\end{enumerate}
 
 
-\subsection{Handling Messages}
+
+\subsection{Delegating Functions}
 \begin{callout}
 TODO: Confidence 1/10: Dårlige forklaringer, dårlig grammatik etc.
 \end{callout}
