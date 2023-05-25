@@ -11,7 +11,7 @@
 \usepackage[most]{tcolorbox}
 \usepackage{fontawesome}
 \usepackage{xcolor}
-
+\usepackage{enumitem} % Add the possibility of removing indentation in enumerate
 \usepackage{multicol}
 
 \usepackage{algorithm2e}
@@ -70,9 +70,8 @@
 
 
 \begin{titlepage}
-\begin{center}
+  \centering
        \vspace*{1cm}
-
        \textbf{Formal Verification of Distributed Leader Election Algorithms with Model Checking}\\
        \vspace{0.4cm}
        June 1, 2023
@@ -97,7 +96,6 @@
 
        \vspace{0.8cm}
 
-   \end{center}
 \end{titlepage}
 \begin{document}
 
@@ -128,29 +126,17 @@ The aim of a leader election algorithm, thus, is to elect a leader from a set of
 
 This \textit{report?} will search to implement two leader election algorithms: The \textit{Bully Algorithm} and the \textit{Ring Algorithm}\footnote{Also known as the Lelang, Chang and Roberts (LCR) algorithm, but commonly referred to as the Ring algorithm, as will be done in this \texit{report?}}
 
-Both of the algorithms assume that:
+Both of the algorithms are algorithms that work on graphs. The Bully Algorithm's overlay is a complete, undirected graph, and the Ring Algorithm's overlay is a superimposed undirected ring, and a logical complete graph. Both algorithms assume that:
 \begin{itemize}
   \item The network is reliable. Messages do not get lost.
   \item Nodes may fail at any time, including the leader.
   \item Fail-stop model. Failed nodes are removed from the system forever.
 \end{itemize}
 
-\begin{callout}
-  maybesomething about how they are both on graphs?
-  \end{callout}
-
 
 \section{Bully Algorithm}
-\begin{callout}
-TODO: Confidence 3/10
-\end{callout}
 
-The bully algorithm is an algorithm which solves the problem of leader election. The bully algorithm assumes a complete undirected graph.\cite{marco}
-\textit{Should I describe what a complete undirected graph is?}
-
-\begin{callout}
-Should I be describing this?
-\end{callout}
+The Bully Algorithm is an algorithm which solves the problem of leader election. The bully algorithm assumes a complete undirected graph.
 
 The messages in the algorithm are:
 \begin{itemize}
@@ -159,9 +145,6 @@ The messages in the algorithm are:
   \item \textit{victory}: sent by winner to announce victory
 \end{itemize}
 
-\begin{callout}
-  Maybe this should be a figure? Easier to refer to
-  \end{callout}
 When a process P recovers from failure, or the failure detector indicates that the current leader has failed, P performs the following actions:
 
 
@@ -178,13 +161,42 @@ When a process P recovers from failure, or the failure detector indicates that t
 
 
 \section{Ring Algorithm}
-\begin{callout}
-TODO: Confidence 3/10
-\end{callout}
 
-The Ring Algorithm is an algorithm that solves the Leader Election problem. In the bully algorithm, we assume a complete directed ring.
+The Ring Algorithm solves the Leader ELection problem. However, unlike the Bully Algorithm, the Ring Algorithm assumes a superimposed undirected ring.
 
+The messages in the Ring Algorithm are:
+\begin{itemize}
+  \item \textit{probe(id)}: search for the leader
+  \item \textit{selected(id)}: announce the result
+\end{itemize}
 
+You will notice in the messages, that they have attached an \textit{id}. The \textit{id} is used to identify who originally sent the message.
+
+Furthermore, the Ring Algorithm uses a \textit{boolean} variable, called \textit{participate}. This variable is required for the algorithm, and indicates whether or not process $P_{i}$ participates in the election.
+
+\noindent
+When process $P_{i}$ wakes up to participate in the election:
+\begin{enumerate}
+  \item Send \textit{probe(i)} to right neighbour
+        \item \textit{participate } $\leftarrow $ \textsc{True}
+\end{enumerate}
+
+\noindent
+When \textit{probe(k)} message arrives from the left neighbour $P_{j}$:
+\begin{enumerate}
+  \item If \textit{participate} = \textsc{False} then \textit{participate} $\leftarrow$ \textsc{True}.
+  \item if $i > k$ then discard the probe
+  \item else if $i < k$ then forward \textit{probe(k)} to right neighbor
+  \item else if $i = k$ then declare $i$ is the leader; circulate \textit{selected(i)} to right neighbour;
+\end{enumerate}
+
+\noindent
+When a \textit{selected(x)} message arrives from left neighbour:
+\begin{enumerate}
+  \item if $x \neq i$ then note $x$ as the leader and forward message to right neighbor
+        \item else do not forward the \textit{selected} message.
+\end{enumerate}
+(\cite{kshemkalyani2011distributed})
 \section{TLA+}
 \begin{callout}
   write something about distributed systems
@@ -195,7 +207,7 @@ TLA+ (Temporal Language of Actions Plus) is a language for modeling specificatio
 \chapter{Bully Algorithm}
 
 \section{Converting to TLA+}
-Since there is no specific pseudocode to the bully algorithm, but rather an instruction set for what process $p$ should do when it wakes up, it has more so been a process of modelling from thoughts rather than converting from pseudocode.
+Since we have based ourself on an instruction set rather than pseudocode for what process $p$ should do, it has been more a process of modelling the algorithm correctly, rather than converting it from pseudocode.
 
 \subsection{Deviations from pseudocode}
 The second point in the algorithm described earlier states that, if process $p$ receives no \textit{alive} message after sending an Election message, then it broadcasts an \textit{victory} message to all other processes. Since TLA$^{+}$ does not allow for waiting a specified amount of time, I have made a major modification to the algorithm. Instead of waiting to see, it immediately checks if process P is the process with the highest ID alive, and broadcasts a \textit{victory} message if this is the case. We allow ourself this because \textit{fail-stop model?} assumes that all processes will know the failure of other processes, but it is not specified how. Therefore, we can assume that the process will know that it is the highest process. This is also done in the beginning of the algorithm, when a process checks if a leader is dead. However, the rest of the implementation is as true to the pseudocode \textit{can I call it that?} as possible.
@@ -234,6 +246,7 @@ The second point in the algorithm described earlier states that, if process $p$ 
 \fl{}\bottombar\cl{}
 
 \caption{Setup for the Bully Algorithm}
+\label{bullysetup}
 \end{figure}
 
 Before modeling the behavior of the specification, we set up the constants, variables and types \textit{types? better explanation needed}. Looking at the specification for the algorithm, we need to model processes and messages.
@@ -279,7 +292,7 @@ Furthermore, we define a sequence, \textbf{MessageBox} which holds every process
 \end{figure}
 
 \begin{calloutyellow}
-  How much of this should actually be described? Should this section maybe be after the explanation of handlers?
+  Should this section maybe be after the explanation of handlers? I added a new function, that should be explained as well.
   \end{callout}
 
 Along with the correct modeling of processes, the most important functionality in the algorithm is the sending, receiving and handling of messages.
@@ -291,22 +304,32 @@ MessageBox'
 \end{lstlisting}
 This defines the MessageBox variable to have $\langle p, $ {\sans ``ELECTION''} $\rangle$ appended to \textit{MessageBox[q]} in the next state.
 
-\begin{callout}
+\begin{calloutyellow}
   In earlier section, maybe write about why we have modelled the messages liket his, rather than when using them? Why do we have sender e.g.
-  \end{callout}
+  \end{calloutyellow}
 
   As discussed earlier, there are three different messages in the bully algorithm: \textit{alive}, \textit{victory}, and \textit{election}.
 
-\begin{callout}
-Is the next section necessary or overflødig?
-\end{callout}
-
 The \textit{alive} message is only sent in a case where a process receives an \textit{election} message from a process with a lower id. Thus, no additional work is needed other than process $q$ should receive an \textit{alive} message from process $p$. This job is done by the \textit{SendAlive} function.
 
-The \textit{victory} message is sent to all processes except for the sender. Therefore \textit{SendVictory} sends a \textit{victory} message to all processes except the sender. Note that it only sends to processes that are active. We can do this, because we assume a \textit{fail-stop? i forgot} model, meaning that we know when processes die.
+The \textit{SendVictory} function is similar, only it sends the \textit{victory} message to all processes except the sender. We assume a fail-stop model\footnote{In a fail-stop model, any functioning process may fail at any time, and any other processes can learn that the process has failed. (\cite{kshemkalyani2011distributed})}, meaning that the other processes learn when a process dies, allowing us to send only to the alive processes.
 \begin{callout}
 Why can't I just say $q \in (1..MaxAliveID $\textbackslash$ p)$?
 \end{callout}
+
+\begin{figure}
+
+\tlatex
+\@x{}\moduleLeftDash\@xx{MaxAliveID}\moduleRightDash\@xx{}%
+\@xx{}%
+\@x{ MaxAliveID \.{\defeq} {\CHOOSE} id \.{\in} ProcessID \.{:}}%
+ \@x{\@s{80.15} \A\, p \.{\in} ProcessID \.{:} State [ p ] . Condition
+ \.{=}\@w{Dead}}%
+\@x{\@s{163.18} \.{\lor} id \.{\geq} State [ p ] . ID}%
+\fl{}\bottombar\cl{}
+
+  \caption{Function that returns the highest ID alive}
+  \end{figure}
 
 \begin{figure}
   \tlatex
@@ -319,50 +342,40 @@ Why can't I just say $q \in (1..MaxAliveID $\textbackslash$ p)$?
   \caption{Function which returns all IDs higher than $p$}
 \end{figure}
 
-  Similar to the \textit{victory} message, the \textit{election} message is sent to a select group of processes. This time it's all processes with a higher ID than $p$. This is achieved using a helper function, \textit{HigherIDs}, which takes argument $p$ and gives a list of all processes with a higher ID than $p$ (see figure \ref{higherids}).
+Similar to the \textit{victory} message, the \textit{election} message is sent to a select group of processes. This time it's all processes with a higher ID than $p$. This is achieved using a helper function \textit{HigherIDs} (see figure \ref{higherids}.)
 
-\section{Handling Messages}
-\begin{callout}
-TODO: Confidence 5/10: Måske fungerer referencer til algoritme ikke helt?
-\end{callout}
+\section{Handling Received Messages}
 
 
 \begin{figure}
 \tlatex
-\@x{}\moduleLeftDash\@xx{Receive Messages}\moduleRightDash\@xx{}%
- \@x{ ReceiveAlive ( p )\@s{2.29} \.{\defeq} \.{\land} State [ p ] .
+\@x{}\moduleLeftDash\@xx{Handle Received Messages}\moduleRightDash\@xx{}%
+
+\@pvspace{8.0pt}%
+ \@x{ ReceiveAlive ( p ,\, q ) \.{\defeq} \.{\land} State [ p ] .
  Participating \.{=} {\TRUE}}%
 \@y{\@s{0}%
  Make sure they are already participating
 }%
 \@xx{}%
- \@x{\@s{89.28} \.{\land} \E\, q \.{\in} HigherIDs ( p ) \.{:} {\langle} q
- ,\,\@w{ALIVE} {\rangle} \.{\in} MessageBox [ p ]}%
-\@y{\@s{0}%
- The alive should come from a higher \ensuremath{ID
-}}%
-\@xx{}%
- \@x{\@s{89.28} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+\@x{\@s{98.58} \.{\land} p \.{>} q}%
+ \@x{\@s{98.58} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
  Participating \.{=} {\FALSE} ]}%
 \@y{\@s{0}%
  No longer participate
 }%
 \@xx{}%
 \@pvspace{8.0pt}%
- \@x{ ReceiveElectionFromLowerID ( p ,\, q ) \.{\defeq}\@s{4.1} \.{\land}
- MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}}%
- \@x{\@s{220.42} {\bang} [ q ] \.{=} Append ( MessageBox [ q ] ,\, {\langle} p
- ,\,\@w{ALIVE} {\rangle} ) ]}%
- \@x{\@s{176.51} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ \@x{ ReceiveElection ( p ,\, q ) \.{\defeq}\@s{4.1} \.{\lor} \.{\land} p
+ \.{=} MaxAliveID}%
+\@x{\@s{126.95} \.{\land} SendVictoryAndTail ( p )}%
+ \@x{\@s{126.95} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Participating \.{=} {\FALSE} ,\,}%
+\@x{\@s{244.46} {\bang} [ p ] . Leader \.{=} p ]}%
+\@x{\@s{115.84} \.{\lor} \.{\land} p \.{\neq} MaxAliveID}%
+\@x{\@s{126.95} \.{\land} SendElectionAndAliveAndTail ( p ,\, q )}%
+ \@x{\@s{126.95} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
  Participating \.{=} {\TRUE} ]}%
-\@x{\@s{176.51} \.{\land} \.{\lor} \.{\land} p \.{=} MaxAliveID}%
-\@x{\@s{198.73} \.{\land} SendVictory ( p )}%
-\@x{\@s{187.62} \.{\lor} \.{\land} p \.{\neq} MaxAliveID}%
-\@x{\@s{198.73} \.{\land} SendElection ( p )}%
-\@pvspace{8.0pt}%
- \@x{ ReceiveElectionFromHigherID ( p ) \.{\defeq} \.{\land} State \.{'} \.{=}
- [ State {\EXCEPT} {\bang} [ p ] . Participating \.{=} {\TRUE} ]}%
-\@x{\@s{163.51} \.{\land} SendElection ( p )}%
 \@pvspace{8.0pt}%
  \@x{ ReceiveVictory ( p ,\, q ) \.{\defeq} State \.{'} \.{=} [ State
  {\EXCEPT} {\bang} [ p ] . Leader \.{=} q ]}%
@@ -371,24 +384,24 @@ TODO: Confidence 5/10: Måske fungerer referencer til algoritme ikke helt?
 }%
 \@xx{}%
 
+
 \fl{}\bottombar\cl{}
 
 \caption{Message Handlers}
+\label{messagehandlers}
 \end{figure}
 
 \begin{calloutyellow}
-Bad formulations
+Bad formulations. HandleMessages should probably be discussed first.
   \end{calloutyellow}
 
-When a process receives a message, the correct behavior is determined by the \textit{HandleMessages} function.
-
-According to the pseudocode, when a process $p$ receives a message, depending on the type of message there are multiple things to do.
+When a message is received, a process will periodically check the \textit{HandleMessages} function, which will then execute the correct functions depending on the message.
 
 Points 3, 4, and 5 describe what to do when receiving messages:
 
-\begin{callout}
+\begin{calloutyellow}
 Maybe make the pseudocode a figure and refer to that instead?
-  \end{callout}
+\end{calloutyellow}
 \begin{enumerate}
   \setcounter{enumi}{2}
   \item If P receives an alive from a process with a higher ID, it sends no further messages for this election and waits for a Victory message. (If there is no Victory message after a period of time, it restarts the process at the beginning.)
@@ -396,158 +409,547 @@ Maybe make the pseudocode a figure and refer to that instead?
   \item If P receives a victory message, it treats the sender as the leader.
 \end{enumerate}
 
+The function \textit{ReceiveAlive} (see figure \ref{messagehandlers}) addresses point 3. The function does not need to check if the sender of the \textit{alive} message is alive, since any messages from dead processes are removed by the \textit{HandleMessages} function. Therefore, the only thing \textit{ReceiveAlive} does, is to check if the message is from a higher id than itself, and if so, it modifies it's participation status to be FALSE.
+
+The function \textit{ReceiveElection} (Figure \ref{messagehandlers}) addresses point 4. Since we assume a fail-stop model, we can say that if $p$ is the process with the highest id alive, it can send a \textit{victory} message, and finish the election by declaring itself the leader. If this is not the case, it sends an \textit{election} message, and an \textit{alive} message to the process who sent $p$ the \textit{election} message.
+
+The \textit{ReceiveVictory} function (Figure \ref{messagehandlers}) addresses point 5 by setting the leader to the sender of the \textit{victory} message.
 
 
-\subsection{Delegating Functions}
-\begin{callout}
-TODO: Confidence 1/10: Dårlige forklaringer, dårlig grammatik etc.
-\end{callout}
+\section{Delegating Functions with HandleMessages}
+\begin{figure}
+\tlatex
 
-\noindent\fbox{%
-    \parbox{\textwidth}{%
-\makebox[\textwidth]{\includegraphics[scale=0.33]{handlemessages.png}} % scale to align
-    }%
-}
+\@x{}\moduleLeftDash\@xx{Delegate Messages}\moduleRightDash\@xx{}%
+\@xx{}%
+\@x{ HandleMessages ( p ) \.{\defeq} \.{\LET}}%
+\@x{\@s{93.62} sender \.{\defeq} Head ( MessageBox [ p ] ) [ 1 ]}%
+\@x{\@s{93.62} msg \.{\defeq} Head ( MessageBox [ p ] ) [ 2 ]}%
+\@x{\@s{93.62} \.{\IN}}%
+\@x{\@s{97.72} \.{\land} State [ p ] . Condition \.{=}\@w{Active}}%
+ \@x{\@s{97.72} \.{\land} MessageBox [ p ] \.{\neq} {\langle}
+ {\rangle}\@s{4.1}}%
+\@y{\@s{0}%
+ Message box shouldn\mbox{'}t be empty
+}%
+\@xx{}%
+ \@x{\@s{97.72} \.{\land} \.{\lor} \.{\land} State [ sender ] . Condition
+ \.{=}\@w{Dead}}%
+ \@x{\@s{119.95} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
+ {\bang} [ p ] \.{=} Tail ( MessageBox [ p ] ) ]}%
+\@y{\@s{0}%
+ Remove first message
+}%
+\@xx{}%
+\@x{\@s{119.95} \.{\land} {\UNCHANGED} State}%
+\@x{\@s{108.84} \.{\lor} \.{\land} msg \.{=}\@w{VICTORY}}%
+\@y{\@s{0}%
+ If the message is \ensuremath{VICTORY
+}}%
+\@xx{}%
+\@x{\@s{119.95} \.{\land} ReceiveVictory ( p ,\, sender )}%
+ \@x{\@s{119.95} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
+ {\bang} [ p ] \.{=} {\langle} {\rangle} ]}%
+\@y{\@s{0}%
+ Remove all messages
+}%
+\@xx{}%
+\@x{\@s{108.84} \.{\lor} \.{\land} msg \.{=}\@w{ELECTION}}%
+\@y{\@s{0}%
+ If the message is \ensuremath{ELECTION
+}}%
+\@xx{}%
+\@x{\@s{119.95} \.{\land} ReceiveElection ( p ,\, sender )}%
+\@y{\@s{0}%
+ Tail is done incide \ensuremath{ReceiveElection
+}}%
+\@xx{}%
+\@x{\@s{108.84} \.{\lor} \.{\land} msg \.{=}\@w{ALIVE}}%
+\@y{\@s{0}%
+ If the message is \ensuremath{ALIVE
+}}%
+\@xx{}%
+\@x{\@s{119.95} \.{\land} ReceiveAlive ( p ,\, sender )}%
+\@y{\@s{0}%
+ Handle in \ensuremath{ReceiveAlive
+}}%
+\@xx{}%
+ \@x{\@s{119.95} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
+ {\bang} [ p ] \.{=} Tail ( MessageBox [ p ] ) ]}%
+\@y{\@s{0}%
+ Remove first message
+}%
+\@xx{}%
 
-This function checks for new messages in a process' message box. It does this by looking at the first entry (the head) of the message box of process $p$. The first case is to clean up in case the process is dead. The only thing that is done, is to remove the message from the dead process. However, in the case where the process is not dead, the function looks at the contents of the message. It then calls the appropriate function depending the contents. After calling the function it removes the latest message by modifying the messagebox to be the tail.
+\fl{}\bottombar\cl{}
+
+\caption{Delegating Functions}
+\label{handlemessages}
+\end{figure}
+
+In the \textit{Next} predicate of the specification, one of the actions a process can take is to check its messages. This is done via the \textit{HandleMessages} function. If process $p$ has any messages in their inbox, one of 4 things can happen, depending on the type of message or the condition of the sender.
+
+\begin{enumerate}[wide, labelwidth=!, labelindent=0pt]
+  \item If the sender is dead, we ignore the message and delete it from the inbox of process $p$.
+  \item If the content of the message is {\sans ``VICTORY''}, we delegate work to the \textit{ReceiveVictory} function and remove all messages from process $p$ so that an endless election does not occur. If we don't remove all messages, it is likely a lot of \textit{election} messages are left behind, all of which will start a new election when a leader has just been found. \textbf{Should this be a footnote?}
+  \item If the content of the message is {\sans ``ELECTION''}, we delegate the rest of the work to the \textit{ReceiveElection} function.
+  \item If the content of the message is {\sans ``ALIVE''}, we delegate work to the \textit{ReceiveAlive} function and delete the message from the inbox of process $p$.
+\end{enumerate}
+
 
 \section{Checking the leader condition}
-TODO: COnfidence 2/10: DÅrlig grammatik, dårlig formulering etc.\\
-\noindent\fbox{%
-    \parbox{\textwidth}{%
-\makebox[\textwidth]{\includegraphics[scale=0.30]{checkleader.png}}
-    }%
-}
 
-This function checks whether or not the current leader is dead. It only does this, if there is the process checking is not participating in an election (meaning that we assume there is no election). We then use the helper function defined up in the Sends, to see if the process has the highest ID. If this is the case, we just send a victory message, otherwise we send an election message out, and change the process to be participating in the election.
-We can ``just'' say if the process has the highest ID, because we assume \textbf{TODO: hvad er det nu vi assumer siden vi bare kan sige det her? noget med at vi ved hvis processer er døde, vi ved bare ikke hvordan}
-This is also the reason this function is used, rather than not getting a response and then assuming the leader process is dead.
+\begin{calloutgreen}
+  Minor corrections needed.
+  \end{calloutgreen}
 
-\section{Next predicate and dying leader}
-\begin{callout}
-TODO: Confidence 2/10: For kort, dårligt beskrevet etc.
-\end{callout}
+\begin{figure}
+\tlatex
+\@x{}\moduleLeftDash\@xx{CheckLeader}\moduleRightDash\@xx{}%
+ \@x{ CheckLeader ( p ) \.{\defeq}\@s{8.2} \.{\land} State [ p ] . Condition
+ \.{=}\@w{Active}}%
+ \@x{\@s{96.12} \.{\land} State [ State [ p ] . Leader ] . Condition
+ \.{=}\@w{Dead}}%
+\@x{\@s{96.12} \.{\land} \.{\lor} \.{\land} p \.{=} MaxAliveID}%
+\@x{\@s{118.35} \.{\land} SendVictory ( p )}%
+ \@x{\@s{118.35} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Leader \.{=} p ]}%
+\@x{\@s{107.24} \.{\lor} \.{\land} p \.{\neq} MaxAliveID}%
+\@x{\@s{118.35} \.{\land} SendElection ( p )}%
+ \@x{\@s{118.35} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Participating \.{=} {\TRUE} ]}%
 
-\noindent\fbox{%
-    \parbox{\textwidth}{%
-\makebox[\textwidth]{\includegraphics[scale=0.38]{killnext.png}}
-    }%
-}
+\fl{}\bottombar\cl{}
 
+\caption{Checking the condition of the leader}
+\label{checkleader}
+\end{figure}
 
-The Next predicate is the predicate which chooses what should happen in the next state. Here we say that for some process $p$, we can either check if the leader is alive, handle any messages or kill the leader. Killing the leader is only a function to ensure the proper functioning of the spec.
+One of the actions a process can take in the next state is to check the condition of the leader.
+In the pseudocode, it is specified that ``When a process P recovers from failure, or the failure detector indicates that the current leader has failed...''. Since we assume that the processes do not recover from failure, and know that a process is dead, we use the \textit{CheckLeader} (Figure \ref{checkleader}) function instead.
 
-
-
-\noindent\fbox{%
-    \parbox{\textwidth}{%
-\makebox[\textwidth]{\includegraphics[scale=0.49]{typeok.png}}
-\makebox[\textwidth]{\includegraphics[scale=0.49]{t_invariants.png}}
-    }%
-}
-
-\textbf{How the invariants are set up:}\\
-The invariants are set up by depending on whether they are checking one process or two processes. If one process is checked, it checks for all processes p, while if they are checking two processes, they check for all processses p and q. Using this way, we make sure that each process gets treated correctly, and that we don't just select a random pair that might work at that moment.
+The function only runs if the process checking is active, and the leader is dead. If this is the case, it checks whether process $p$ is the process with the highest id. If this is the case, $p$ sends a \textit{victory} message, and declares itself the victor. If $p$ is not the process with the highest id, it sends an \textit{election} message and sets itself to participate in the election.
 
 
-Invariants will be checked to be true in every possible state.
 
-Earlier in the report, we talked about TypeOK, as it is the invariant which makes sure that every variable holds legal values for this specification.
-It does this by checking each process in ProcessID (I.e., each process in general) and making sure that they are a part of the correct set.(TODO: FOR PROCESSID THIS IS REDUNDANT). This means that the Condition proprety should either be Active or Dead, the leader should be a legal process id, participating should be a boolean and the messagebox should be a mapping from processid to a sequence of messages.
+\section{Next predicate and killing the leader}
+\begin{figure}
 
-The OneLeader invariant makes sure that if there exists two leaders, then those two leaders must be the same process.
-% TODO: This doesn't work, does it?
-%
-UniqueID makes sure that no process will have the same id.
+\tlatex
+\@x{}\moduleLeftDash\@xx{NextPredicateAndKillLeader}\moduleRightDash\@xx{}%
 
-Pariticpating makes sure that if a process is participating, it is not the leader itself.
+\@x{ KillLeader \.{\defeq}}%
+\@x{\@s{12.29} \.{\land} State [ MaxAliveID ] . Leader \.{=} MaxAliveID}%
+ \@x{\@s{12.29} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [
+ MaxAliveID ] . Condition \.{=}\@w{Dead} ,\, {\bang} [ MaxAliveID ] .
+ Participating \.{=} {\FALSE} ]}%
+ \@x{\@s{12.29} \.{\land} Cardinality ( \{ p \.{\in} ProcessID \.{:} State [ p
+ ] . Condition \.{=}\@w{Active} \} ) \.{\geq} 2}%
+\@x{\@s{12.29} \.{\land} {\UNCHANGED} MessageBox}%
+\@pvspace{8.0pt}%
+\@x{ Next \.{\defeq} \.{\lor} KillLeader}%
+ \@x{\@s{39.83} \.{\lor} \E\, p \.{\in} 1 \.{\dotdot} MaxAliveID \.{:}
+ CheckLeader ( p ) \.{\lor} HandleMessages ( p )}%
+
+\fl{}\bottombar\cl{}
+\caption{Next predicate and KillLeader}
+\label{nextpredkillleader}
+\end{figure}
+
+\begin{calloutgreen}
+  Minor corrections needed, some formulations and maybe a bit too much explanation.
+  \end{calloutgreen}
+
+The Next predicate is the predicate which chooses what should happen in the next state.
+For this specification there are two options. Either, the leader is killed, or a process handles it's messages or checks its leader's status.
+
+In case the choice is made to kill the leader, we make sure that the leader sees itself as the leader, and if they do we change its condition in the next state to be dead and its participation status to be \textsc{False}, effectively killing it. This is only done if there are 2 or more processes alive.
+
+In case the decision to kill the leader is not chosen, a process is chosen to either check it's leader or handle it's messages.
 
 
-\subsection{Properties}
-..Explain what properties are...
+\section{Invariants and properties}
 
+\begin{figure}
+  \tlatex
+\@x{}\moduleLeftDash\@xx{Invariants and Properties}\moduleRightDash\@xx{}%
+\@x{}%
+\@y{\@s{0}%
+ Invariants
+}%
+\@xx{}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Each variable should be within the type constraints
+}%
+\@xx{}%
+\@x{ TypeOK \.{\defeq} \A\, p \.{\in} ProcessID \.{:}}%
+\@x{\@s{41.35} \.{\land} State [ p ] . ID \.{\in} ProcessID}%
+ \@x{\@s{41.35} \.{\land} State [ p ] . Condition \.{\in} \{\@w{Active}
+ ,\,\@w{Dead} \}}%
+\@x{\@s{41.35} \.{\land} State [ p ] . Leader \.{\in} ProcessID}%
+\@x{\@s{41.35} \.{\land} State [ p ] . Participating \.{\in} {\BOOLEAN}}%
+ \@x{\@s{41.35} \.{\land} MessageBox \.{\in} [ ProcessID \.{\rightarrow} Seq (
+ Message ) ]}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Every process should have a unique \ensuremath{ID
+}}%
+\@xx{}%
+ \@x{ UniqueID \.{\defeq} \A\, p ,\, q \.{\in} ProcessID \.{:} ( State [ p ] .
+ ID \.{=} State [ q ] . ID ) \.{\implies} ( p \.{=} q )}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ If a process is participating in the election, then it should not be the
+ leader
+}%
+\@xx{}%
+ \@x{ Participating \.{\defeq} \A\, p \.{\in} ProcessID \.{:} State [ p ] .
+ Participating \.{=} {\TRUE} \.{\implies} State [ p ] . Leader \.{\neq} p}%
+\@pvspace{8.0pt}%
+\@x{}\midbar\@xx{}%
+\@x{}%
+\@y{\@s{0}%
+ Properties
+}%
+\@xx{}%
+ \@x{ ElectionTerminationImpliesSameLeader \.{\defeq} \A\, p ,\, q \.{\in}
+ ProcessID \.{:}}%
+\@x{\@s{16.4} ( State [ p ] . Condition \.{=}\@w{Active}}%
+\@x{\@s{16.4} \.{\land} State [ q ] . Condition \.{=}\@w{Active}}%
+\@x{\@s{16.4} \.{\land} State [ p ] . Participating \.{=} {\FALSE}}%
+ \@x{\@s{16.4} \.{\land} State [ q ] . Participating\@s{0.25} \.{=} {\FALSE}
+ )}%
+ \@x{\@s{16.4} \.{\implies} ( State [ p ] . Leader \.{=} State [ q ] . Leader
+ )}%
+\@pvspace{16.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ The highest alive process should become the leader
+}%
+\@xx{}%
+\@x{ HighestAliveProcessIsLeader \.{\defeq} \A\, p \.{\in} ProcessID \.{:}}%
+\@x{\@s{16.4} State [ p ] . Participating \.{=} {\FALSE} \.{\implies}}%
+ \@x{\@s{16.4} ( State [ MaxAliveID ] . Condition \.{=}\@w{Active}
+ \.{\implies} State [ p ] . Leader \.{=} MaxAliveID )}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Eventually, the election will end
+}%
+\@xx{}%
+ \@x{ ElectionWillEnd \.{\defeq} \A\, p \.{\in} ProcessID \.{:} State [ p ] .
+ Participating \.{\leadsto} ( {\Diamond} ( State [ p ] . Participating \.{=}
+ {\FALSE} ) )}%
+\@pvspace{16.0pt}%
+\@x{}\bottombar\@xx{}%
+
+  \caption{Invariants and Properties in the Bully Algorithm}
+  \label{bullyinvariantsproperties}
+  \end{figure}
+
+\textbf{Invariants}\\
+\noindent
+In TLA$^{+}$, an \textit{invariant} is a statement that must be true on every state of the program\cite{https://learntla.com/core/invariants.html}. One common type of invariant is the \textit{TypeOK} invariant (Figure \ref{bullyinvariantsproperties}). \textit{TypeOK} makes sure that the types never go out of a specified domain or change to an unwanted value. In the case of this specification this is true for the \textit{State} and \textit{MessageBox} variables. For the \textit{State} variable, it will hold true that:
+\begin{itemize}
+  \item A process' \textit{id} is a part of the \textit{ProcessID}\footnote{See figure \ref{bullysetup} for the definition of ProcessID} set
+  \item A process' condition is either \textit{Active} or \textit{Dead}
+  \item A process' \textit{leader} is a part of the \textit{ProcessID} set
+  \item A process' participation status is a \textsc{Boolean}
+\end{itemize}
+For the message box it holds that each ID will map to a sequence of messages\footnote{See figure \ref{bullysetup} for the defintion of Message}.
+
+In this specification, we also have an invariant called \textit{UniqueID} which makes sure that no two processes hold the same ID. Furthermore, we also have an invariant called \textit{Participating} which states that, if a process is participating in an election, it cannot be the leader itself, or see itself as leader.
+
+\\\\
+\noindent
+\textbf{Properties}\\
+\noindent
 There are two kinds of temporal properties: safety properties, and liveness properties. Safety properties make sure that the system doesn't do bad things, and liveness makes sure our system always does a good thing.\cite{https://learntla.com/core/temporal-logic.html}
 
+We have three properties: two safety properties and one liveness property. The safety properties are \textit{ElectionTerminationImpliesSameLeader}, and \textit{HighestAliveProcessIsLeader}. \textit{ElectionTerminationImpliesSameLeader} ensures that when two processes that have been in an election eventually get out of the election, they will have the same leader. \textit{HighestAliveProcessIsLeader} ensures that if a process is not participating in an election, it's leader is the process with the highest id alive.
 
-\noindent\fbox{%
-    \parbox{\textwidth}{%
-\makebox[\textwidth]{\includegraphics[scale=0.435]{properties.png}}
-    }%
-}
+The liveness property, \textit{ElectionWillEnd} ensures that an election will eventually end.
 
-ElectionTerminationImpliesSameLeader is a safety property that ensures that when an election is done, everyone has the same leader.
-
-HighestAliveProcessIsLeader is a safety property, tghat ensures that if a process is not participating in an election, then the highest alive process should be the leader.
-
-ElectionWillEnd is a safety property that ensures that ensures that
 
 
 \chapter{Ring Algorithm}
 
-...Also called LCR
 
-\section{Thought Process}
+\section{Similarities to Bully Algorithm}
+The Ring Algorithm and the Bully Algorithm are both similar in many ways. One similarity which carries over from our implementation of the Bully Algorithm to the Ring Algorithm is the modeling of the graphs. Since the Ring Algorithm is also an algorithm on graphs, we can reuse a lot of the setup. The Ring Algorithms superimposed overlay is an undirected ring, thus we will not need to model it is a ring, even though it is a ring. We assume it to be a ring, and write the specification as if it was a ring.
 
-\lipsum[1]
-
-\textbf{Similarities to Bully Algorithm}
-
-The Ring Algorithm and the Bully Algorithm are both algorithms for leader election, and thus many of the core functions and models can be reused. These include invariants, properties, processes, messages and more.
 
 \section{Setup}
-\noindent\fbox{%
-    \parbox{\textwidth}{%
-\makebox[\textwidth]{\includegraphics[scale=0.335]{ring_setup.png}}
-    }%
-}
 
-This setup is a lot like the setup of the Bully Algorithm, except the Message function is different. This is solely a syntactic change. In the Ring algorithm each message holds an ``ID'', which is usually depicted as PROBE(ID) or SELECTED(ID). Thus, the change is made to reflect this, and also to avoid confusion with how the BullyAlgorithm handles it, where the process is the sender of the message, not the id. The sender isn't needed in the Ring Algorithm, as it is a ring structure and sends the message to the neighbour.
+\begin{figure}
+\tlatex
+\@x{}\moduleLeftDash\@xx{Setup}\moduleRightDash\@xx{}%
+\@x{ {\EXTENDS} Naturals ,\, FiniteSets ,\, Sequences ,\, TLC}%
+\@pvspace{8.0pt}%
+\@x{ {\CONSTANT} N}%
+\@pvspace{8.0pt}%
+\@x{ {\ASSUME} N \.{\in} Nat}%
+\@pvspace{8.0pt}%
+\@x{ ProcessID \.{\defeq} 1 \.{\dotdot} N}%
+\@pvspace{8.0pt}%
+\@x{ {\VARIABLES} State ,\, MessageBox}%
+\@pvspace{8.0pt}%
+ \@x{ Message \.{\defeq} \{\@w{PROBE} ,\,\@w{SELECTED} \} \.{\times}
+ ProcessID}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Initializes the variables: \ensuremath{State} and \ensuremath{MessageBox
+}}%
+\@xx{}%
+ \@x{ Init \.{\defeq} \.{\land} State \.{=} [ p\@s{9.46} \.{\in} ProcessID
+ \.{\mapsto} [}%
+\@x{\@s{109.06} ID \.{\mapsto} p ,\,}%
+\@x{\@s{109.06} Condition \.{\mapsto}\@w{Active} ,\,}%
+\@x{\@s{109.06} Leader \.{\mapsto} N ,\,}%
+\@x{\@s{109.06} Participating \.{\mapsto} {\FALSE} ] ]}%
+ \@x{\@s{35.70} \.{\land} MessageBox \.{=} [ p \.{\in} ProcessID \.{\mapsto}
+ {\langle} {\rangle} ]}%
+\@pvspace{8.0pt}%
 
-\section{Helper functions}
-\noindent\fbox{%
-    \parbox{\textwidth}{%
-\makebox[\textwidth]{\includegraphics[scale=0.335]{ring_helpers.png}}
-    }%
-}
+\@x{}\bottombar\@xx{}%
+
+  \caption{The Setup for the Ring Algorithm}
+  \label{ringsetup}
+\end{figure}
+
+The setup (See Figure \ref{ringsetup}) for the Ring Algorithm is almost identical to that of the Bully Algorithm. The only difference is how we define the \textbf{Message}s. A message in the Ring Algorithm has been changed in two ways. First, we don't send the same messages in the Ring Algorihtm. The messages in the Ring Algorithm are \textit{probe} and \textit{selected}. Second, we switch the order of message and process. In the Bully Algorithm it made sense to have the ProcessID as the first part of the message, since it is the sender of the message. In the Ring Algorithm, the process id is the ID of the message, and not the sender. Since both messages in the Ring Algorithm have an ID attached to them, the messages instead have the process on the right side. However, this is purely a syntactic choice.
 
 
-$$2+2 = 4$$
-$2+2=4$
-The helper functions are quite alike the helper functions in the bully algorithm as well, with the most noticable differences being the SendMessage and Neighbour functions.
-The reason I decided for having a SendMessage function in the Ring Algorithm and not in Bully Algorithm, is that it aesthetically looks much prettier in the ring algorithm, and less cluttered, while it would only make it look more cluttered in the Bully Algorithm.
-The neighbour function is a helper function for finding the right-side neighbour of the process. Since the algorithm assumes a ring structure, the right-hand neighbour is just the process id plus one. However, since a leader might die, this is divided with the MaxAliveID, to make sure that if the right hand neighbour is dead, it is sent to the lowest id instead. TODO: this should probably be changed, is in the real algorithm any process can die at any time.
+\section{Neighbours and Sending Messages}
 
-\section{Event Handlers}
-In the Ring algorithm there are two main events: receiving the Probe message and receiving the Selected message.
+\begin{figure}
 
-\noindent\fbox{%
-    \parbox{\textwidth}{%
-\makebox[\textwidth]{\includegraphics[scale=0.38]{ring_receive.png}}
-    }%
-}
+  \tlatex
+\@x{}\moduleLeftDash\@xx{Neighbour}\moduleRightDash\@xx{}%
+\@x{ Neighbour ( p ) \.{\defeq} ( p \.{\%} MaxAliveID ) \.{+} 1}%
+\@x{}\bottombar\@xx{}%
 
-\textbf{ProcessProbe}\\
-According to the algorithm, in case a process receives a probe message, and the process id is lower than the id in the Probe message, the message is sent on the the next process. We do this using the SnedMessage and Neighbour helper functions. TODO: THIS IS WHERE THE PROBLEM HAPPENS PROBABLY. In the case of the ID being the same as the process ID, we assume that they are the new leader, and a SELECTED message with that process ID is sent, as well as their own leading being set to be themself. If the process ID is greater than the ID in the message, we do nothing, as is specified by the algorithm.
+  \caption{Neighbour function}
+  \label{ringneighbour}
+\end{figure}
+\begin{figure}
+\tlatex
+\@x{}\moduleLeftDash\@xx{SendingMessages}\moduleRightDash\@xx{}%
+\@x{ SendMessageAndTailMessageBox ( p ,\, q ,\, id ,\, msg ) \.{\defeq}}%
+ \@x{\@s{49.19} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT} {\bang} [ q ]
+ \.{=} Append ( MessageBox [ q ] ,\, {\langle} msg ,\, id {\rangle} ) ,\,}%
+\@x{\@s{126.26} {\bang} [ p ] \.{=} Tail ( MessageBox [ p ] ) ]}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Simple \ensuremath{SendMessage}. Sends message \ensuremath{msg} to
+ \ensuremath{q} with \ensuremath{id} \ensuremath{id}.
+}%
+\@xx{}%
+\@x{ SendMessage ( q ,\, id ,\, msg ) \.{\defeq}}%
+ \@x{\@s{61.65} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT} {\bang} [ q ]
+ \.{=} Append ( MessageBox [ q ] ,\, {\langle} msg ,\, id {\rangle} ) ]}%
+\@pvspace{8.0pt}%
+\@x{ SendMessageAndEmptyMessageBox ( p ,\, q ,\, id ,\, msg ) \.{\defeq}}%
+ \@x{\@s{49.19} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT} {\bang} [ q ]
+ \.{=} Append ( MessageBox [ q ] ,\, {\langle} msg ,\, id {\rangle} ) ,\,
+ {\bang} [ p ] \.{=} {\langle} {\rangle} ]}%
 
-\textbf{ProcessSelected}\\
-ProcessSelected simply checks if the process ID is equal to the ID of the Selected message. If so, the process is declared the election is done. Otherwise, the message is sent on, to keep declaring the new leader.
+
+\@x{}\bottombar\@xx{}%
+\caption{Sending Messages}
+\label{ringsendingmessages}
+\end{figure}
+
+\noindent
+\textbf{Neighbour}\\
+\noindent
+In a ring topology, each process has a left-side neighbour and a right-side neighbour. For the Ring Algorithm we only care about the right-side neighbour. Thus, the \textit{Neighbour} function (Figure \ref{ringneighbour} returns the left-side neighbour. However, there is a flaw in this function. It assumes that only the leaders die, and no non-leaders will die. This is the only deviation from the original specification.
+\\\\
+\noindent
+\textbf{Sending Messages}\\
+\noindent
+We deviate a lot from the Bully algorithm in how messages are sent. Instead of having functions for specific messages, we have two functions \textit{SendMessage} and \textit{SendMessageAndTailMessageBox}. In the Bully Algorithm, a lot had to be done when sending each message. In the Ring Algorithm, messages are only sent to neighbours, thus requiring less work choosing who to send to. In the Bully Algorithm this work was done in the sender functions, but this work is not needed in the Ring Algorithm.
+
+The \textit{SendMessage} function updates the MessageBox of a process with a Message. The \textit{SendMessageAndTailMessageBox} is similar, except it also removes the first message in the MessageBox of $p$. This is done, because the \textit{HandleMessages} function requries both sending messages and deleting in the same state. However, in TLA$^{+}$ you cannot update a variable twice in the same state, thus requiring a function like \textit{SendMessageAndTailMessageBox} to update both message boxes at the same time. \textit{SendMessageAndEmptyMessageBox} is similar to \textit{SendMessageAndTailMessageBox}, but instead of deleting just the first message, it deletes all messages.
+
+
+
+
 
 
 \section{HandleMessages}
-\noindent\fbox{%
-    \parbox{\textwidth}{%
-\makebox[\textwidth]{\includegraphics[scale=0.33]{ring_handle.png}}
-    }%
-}
-TODO: Change image
+\begin{figure}
+\tlatex
 
-HandleMessage is mostly identical to the HandleMessage functionp from the bully algorithm, except with changed messages, and in case of the message being a probe and the process' \textit{participating} field being false, we change it to true.
+\@x{}\moduleLeftDash\@xx{HandleMessages}\moduleRightDash\@xx{}%
+\@x{ HandleMessages ( p ) \.{\defeq} \.{\LET}}%
+\@x{\@s{49.19} id \.{\defeq} Head ( MessageBox [ p ] ) [ 2 ]}%
+\@x{\@s{49.19} msg \.{\defeq} Head ( MessageBox [ p ] ) [ 1 ]}%
+\@x{\@s{49.19} \.{\IN}}%
+\@x{\@s{49.19} \.{\land} State [ p ] . Condition \.{=}\@w{Active}}%
+\@y{\@s{0}%
+ Only if the process is active
+}%
+\@xx{}%
+ \@x{\@s{49.19} \.{\land} MessageBox [ p ] \.{\neq} {\langle}
+ {\rangle}\@s{43.80}}%
+\@y{\@s{0}%
+ The message box shouldn\mbox{'}t be empty
+}%
+\@xx{}%
+\@x{\@s{49.19} \.{\land} \.{\lor} \.{\land} msg \.{=}\@w{PROBE}}%
+\@y{\@s{0}%
+ If the message is \ensuremath{PROBE
+}}%
+\@xx{}%
+ \@x{\@s{71.42} \.{\land} \.{\lor} \.{\land} State [ p ] . Participating \.{=}
+ {\FALSE}}%
+\@y{\@s{0}%
+ Make sure the participation status is \ensuremath{{\TRUE}
+}}%
+\@xx{}%
+ \@x{\@s{93.64} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Participating \.{=} {\TRUE} ]}%
+\@x{\@s{82.53} \.{\lor} \.{\land} State [ p ] . Participating \.{=} {\TRUE}}%
+\@x{\@s{93.64} \.{\land} {\UNCHANGED} State}%
+\@x{\@s{71.42} \.{\land} \.{\lor} \.{\land} p \.{=} id}%
+\@y{\@s{0}%
+ If \ensuremath{p \.{=} id}, send \ensuremath{SELECTED
+}}%
+\@xx{}%
+ \@x{\@s{93.64} \.{\land} SendMessageAndTailMessageBox ( p ,\, Neighbour ( p )
+ ,\, p ,\,\@w{SELECTED} )}%
+\@x{\@s{82.53} \.{\lor} \.{\land} p \.{>} id\@s{4.1}}%
+\@y{\@s{0}%
+ If \ensuremath{p \.{>} id} ignore message
+}%
+\@xx{}%
+ \@x{\@s{93.64} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
+ {\bang} [ p ] \.{=} Tail ( MessageBox [ p ] ) ]}%
+\@x{\@s{82.53} \.{\lor} \.{\land} p \.{<} id}%
+\@y{\@s{0}%
+ If \ensuremath{p \.{<} id} send probe to neighbour
+}%
+\@xx{}%
+ \@x{\@s{93.64} \.{\land} SendMessageAndTailMessageBox ( p ,\, Neighbour ( p )
+ ,\, id ,\,\@w{PROBE} )}%
+\@x{\@s{60.31} \.{\lor} \.{\land} msg \.{=}\@w{SELECTED}}%
+\@y{\@s{0}%
+ If the message is \ensuremath{SELECTED
+}}%
+\@xx{}%
+\@x{\@s{71.42} \.{\land} \.{\lor} \.{\land} p \.{\neq} id}%
+\@y{\@s{0}%
+ If \ensuremath{p \.{\neq} id}, then send \ensuremath{SELECTED} to neighbour
+}%
+\@xx{}%
+ \@x{\@s{93.64} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Leader \.{=} id ,\, {\bang} [ p ] . Participating \.{=} {\FALSE} ]}%
+ \@x{\@s{93.64} \.{\land} SendMessageAndEmptyMessageBox ( p ,\, Neighbour ( p
+ ) ,\, id ,\,\@w{SELECTED} )}%
+\@x{\@s{82.53} \.{\lor} \.{\land} p \.{=} id}%
+\@y{\@s{0}%
+ if \ensuremath{p \.{=} id} then declare itself the leader
+}%
+\@xx{}%
+ \@x{\@s{93.64} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Leader \.{=} id ,\, {\bang} [ p ] . Participating \.{=} {\FALSE} ]}%
+ \@x{\@s{93.64} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
+ {\bang} [ p ] \.{=} {\langle} {\rangle} ]}%
+
+
+\@x{}\bottombar\@xx{}%
+
+  \caption{HandleMessage}
+  \label{ringhandlemessages}
+  \end{figure}
+
+  \begin{calloutyellow}
+    needs polish
+    \end{calloutyellow}
+
+Instead of having separate functions for handling the different messages, all of this is done in the \textit{HandleMessages} function (Figure \ref{ringhandlemessages}).
+
+The function checks if there are any messages for process $p$, and then proceeds to check what kind of message the first message is.
+
+In case the message received is \textit{probe}, we check first if process $p$ is participating. If it is not, we change the \textit{participating} field to be true.
+
+Afterwards, we compare $p$ with the \textit{id} from the message.
+If $p = id$, then we send the ``SELECTED'' message to the neighbour. Then the message box of $p$ is emptied. This is to ensure that no election keeps on going indefinitely.
+If $p > id$, we ignore the message and just delete it. This is because we want the process with the highest ID alive to be the leader, not just the first process to send a \textit{probe}.
+If $p < id$ we send the probe to the right  neighbour, and delete the message.
+
+
+In case the msg is ``SELECTED'' we do not need to check whether or not the process is participating in the election, as they will have participated no matter what, as the \textit{probe} message has been all around the ring. If the $id \neq p$ then we note $id$ to be the leader and set our participation status to be \textsc{False}. We also send the \textit{selected} message to our right neighbour, so that everyone knows who the new leader is. However, if $p = id$ then $p$ is the leader, and he is noted as such by himself. There is a slight deviation from the pseudocode here. In the pseudocode it is stated that $p$ is noted by itself to be the leader, when it first sends the \textit{selected} message to its right neighbour. However, due to the limitations of TLA$^{+}$, I have decided against doing it there, as it would require a check of participation in each equality check with the \textit{id} when it receives the \textit{probe} message. This solution is simply easier to look at. The desired outcome will be the same, i.e. every process having the same leader and not being participating.
+
 
 \section{Checking The Leader Condition}
+\begin{figure}
+  \tlatex
+
+\@x{}\moduleLeftDash\@xx{CheckLeader}\moduleRightDash\@xx{}%
+\@x{ CheckLeader ( p ) \.{\defeq} \.{\land} State [ p ] . Condition
+\.{=}\@w{Active}}%
+\@x{\@s{87.92} \.{\land} State [ State [ p ] . Leader ] . Condition
+\.{=}\@w{Dead}}%
+\@x{\@s{87.92} \.{\land} \.{\lor} \.{\land} MaxAliveID \.{=} 1}%
+\@x{\@s{110.15} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+Leader \.{=} p ,\, {\bang} [ p ] . Participating \.{=} {\FALSE} ]}%
+\@x{\@s{110.15} \.{\land} {\UNCHANGED} MessageBox}%
+\@x{\@s{99.04} \.{\lor} \.{\land} MaxAliveID \.{\neq} 1}%
+\@x{\@s{110.15} \.{\land} SendMessage ( Neighbour ( p ) ,\, p ,\,\@w{PROBE}
+)}%
+\@x{\@s{110.15} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+Participating \.{=} {\TRUE} ]}%
+\@xx{}%
+\@x{}\bottombar\@xx{}%
+
+  \caption{CheckLeader}
+  \label{ringcheckleader}
+  \end{figure}
 
 
+When we check if the leader is dead in the Ring Algorithm (See Figure \ref{ringcheckleader}), we do it a bit differently than in the Bully Algorithm. Here, the only check we, other than to see if the leader is dead, do is to see if there is only one process remaining. If this is the case, we set that one process as the leader, and its participation status to be \textsc{False} ending the election (once and for all). However, if this is not the case, we send a \textit{probe} message to the right neighbour and set $p$s participation status to \textsc{True}.
+
+\section{Next predicate and killing the leader}
+
+\begin{figure}
+\tlatex
+\@x{}\moduleLeftDash\@xx{Next Predicate and Kill Leader}\moduleRightDash\@xx{}%
+  \@x{ KillLeader \.{\defeq}}%
+\@x{\@s{12.29} \.{\land} State [ MaxAliveID ] . Leader \.{=} MaxAliveID}%
+ \@x{\@s{12.29} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [
+ MaxAliveID ] . Condition \.{=}\@w{Dead} ]}%
+ \@x{\@s{12.29} \.{\land} Cardinality ( \{ p \.{\in} ProcessID \.{:} State [ p
+ ] . Condition \.{=}\@w{Active} \} ) \.{\geq} 2}%
+\@x{\@s{12.29} \.{\land} {\UNCHANGED} MessageBox}%
+\@pvspace{8.0pt}%
+\@x{ Next \.{\defeq} \.{\lor} KillLeader}%
+ \@x{\@s{39.83} \.{\lor} \E\, p \.{\in} 1 \.{\dotdot} MaxAliveID \.{:}
+ HandleMessages ( p ) \.{\lor} CheckLeader ( p )}%
+\@x{}\bottombar\@xx{}%
+
+\caption{Next predicate and KillLeader}
+\label{ringnextleader}
+\end{figure}
+
+\begin{calloutyellow}
+  too vague
+  \end{calloutyellow}
+
+KillLeader and the next predicate are identical to the Bully Algorithm.
+
+
+\section{Invariants and Properties}
 
 \chapter{Evaluation}
+
 
 
 
