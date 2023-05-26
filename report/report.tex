@@ -939,23 +939,210 @@ When we check if the leader is dead in the Ring Algorithm (See Figure \ref{ringc
 \label{ringnextleader}
 \end{figure}
 
-\begin{calloutyellow}
+\begin{callout}
   too vague
-  \end{calloutyellow}
+  \end{callout}
 
 KillLeader and the next predicate are identical to the Bully Algorithm.
 
 
 \section{Invariants and Properties}
 
+\begin{figure}
+  \tlatex
+\@x{}\moduleLeftDash\@xx{Invariants and Properties}\moduleRightDash\@xx{}%
+
+\@y{%
+ Invariants
+}%
+\@xx{}%
+\@pvspace{8.0pt}%
+\@x{ TypeOK \.{\defeq} \A\, p \.{\in} ProcessID \.{:}}%
+\@x{\@s{41.35} \.{\land} State [ p ] . ID \.{\in} ProcessID}%
+ \@x{\@s{41.35} \.{\land} State [ p ] . Condition \.{\in} \{\@w{Active}
+ ,\,\@w{Dead} \}}%
+\@x{\@s{41.35} \.{\land} State [ p ] . Leader \.{\in} ProcessID}%
+\@x{\@s{41.35} \.{\land} State [ p ] . Participating \.{\in} {\BOOLEAN}}%
+ \@x{\@s{41.35} \.{\land} MessageBox \.{\in} [ ProcessID \.{\rightarrow} Seq (
+ Message ) ]}%
+\@pvspace{8.0pt}%
+ \@x{ UniqueID \.{\defeq} \A\, p ,\, q \.{\in} ProcessID \.{:} ( State [ p ] .
+ ID \.{=} State [ q ] . ID ) \.{\implies} ( p \.{=} q )}%
+\@pvspace{8.0pt}%
+\@x{}\midbar\@xx{}%
+\@x{}%
+\@y{%
+ Properties
+}%
+\@xx{}%
+\@pvspace{8.0pt}%
+ \@x{ ElectionTerminationImpliesSameLeader \.{\defeq} \A\, p ,\, q \.{\in}
+ ProcessID \.{:}}%
+\@x{\@s{16.4} ( State [ p ] . Condition \.{=}\@w{Active}}%
+\@x{\@s{16.4} \.{\land} State [ q ] . Condition \.{=}\@w{Active}}%
+\@x{\@s{16.4} \.{\land} State [ p ] . Participating \.{=} {\FALSE}}%
+ \@x{\@s{16.4} \.{\land} State [ q ] . Participating\@s{0.25} \.{=} {\FALSE}
+ )}%
+ \@x{\@s{16.4} \.{\implies} ( State [ p ] . Leader \.{=} State [ q ] . Leader
+ )}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Eventually, the election will end
+}%
+\@xx{}%
+ \@x{ ElectionWillEnd \.{\defeq} \A\, p \.{\in} ProcessID \.{:} State [ p ] .
+ Participating \.{\leadsto} ( {\Diamond} ( State [ p ] . Participating \.{=}
+ {\FALSE} ) )}%
+\@pvspace{8.0pt}%
+
+
+\@x{}\bottombar\@xx{}%
+  \caption{Invariants and Properties}
+  \label{ringinvariants}
+  \end{figure}
+
+The Ring Algorithm does not introduce any new invariants or properties (Figure \ref{ringinvariants}) that the Bully Algorithm does not already have. However, the invariant \textit{Participating} (Figure \ref{bullyinvariantsproperties}) is not present. The Participating invariant does not work in the Ring Algorithm, since it checks whether or not a leader is participating, however, a leader will participate in the election if it receives a \textit{probe} message.
+However, all of the other invariants and properties are identical to those of the Bully Algorithm.
+
 \chapter{Evaluation}
+\section{The Model Checker}
+Both the Ring Algorithm and the Bully Algorithm have been thoroughly checked with the TLC Model Checker, which comes with the TLA$^{+}$ toolbox.
+
+With the current code specification, the temporal property \textit{ElectionWillEnd} (Figure \ref{ringinvariants} and \ref{bullyinvariantsproperties}) is violated. This is not a problem with the \textit{ElectionWillEnd} property, but a problem with the specification. See Figure \ref{ringfailuren4} for the values of the variables at the state where the property is violated. As you can see, it looks as if the \textit{selected} message is just about to get to the third process, which would render it the leader. However, this does not happen before the property is violated. You can see a similar result in Figure \ref{ringfailuren3}, in which the \textit{selected} message never gets to the process which should become the new leader. Instead, the first process is flooded with probe messages, if which only 2 get sent on.
+
+It should be noted that, if we do turn off the \textit{ElectionWillEnd} we get an infinitely running program\footnote{It might not be running infinitely, but with $n = 3$ it ran for 1,5 until there was no more space on my hard drive.}. However, if we turn on checking for deadlocks, we get states which seemingly work fine, and have attained the goal of electing a leader (See Figure \ref{ringdeadlocksuccess} for an example state), except for the last process not seeing itself as the leader yet, and still participating in the election. However, this should have been ``fixed'' in the next state. But, as per how the deadlock detection works in TLC, we cannot generalize this do mean that the entire specification works.
+
+We get similar behavior from checking the model of the Bully Algorithm. The temporal property \textit{ElectionWillEnd} fails. See Figure \ref{bullyfailuren3} and \ref{bullyfailuren4}. In the figure where $n = 3$, we can see that it is almost finished with the election, and should declare itself as the leader in the next state, but the \textit{ElectionWillEnd} property stops this. When $n=4$, we have similar behavior, where only one process is left and needs to declare itself the leader. Note, that this is done in the \textit{CheckLeader} function (Figure \ref{checkleader}), so it will be done, but the property is violated before it gets the chance. However, as was the case with the Ring Algorithm, if \textit{ElectionWillEnd} is turned off, we get an infinitely running specification.
+
+\begin{callout}
+  Maybe these should not be figures? Or Maybe they should be in the appendix?
+  \end{callout}
+
+\begin{figure}
+  \begin{lstlisting}
+/\  MessageBox =
+<< << <<"PROBE", 3>>,
+      <<"PROBE", 3>>,
+      <<"PROBE", 3>>,
+      <<"PROBE", 3>>,
+      <<"PROBE", 3>> >>,
+   <<<<"SELECTED", 3>>, <<"PROBE", 3>>, <<"PROBE", 3>>>>,
+   <<>>,
+   <<>> >>
+/\  State =
+<< [ID |-> 1, Condition |-> "Active", Leader |-> 3, Participating |-> TRUE],
+   [ID |-> 2, Condition |-> "Active", Leader |-> 4, Participating |-> TRUE],
+   [ID |-> 3, Condition |-> "Active", Leader |-> 4, Participating |-> TRUE],
+   [ID |-> 4, Condition |-> "Dead", Leader |-> 4, Participating |-> FALSE] >>
+
+  \end{lstlisting}
+
+  \caption{Ring Algorithm last state with violated property. N = 4. State num = 16}
+  \label{ringfailuren4}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}
+/\  MessageBox = << << <<"SELECTED", 2>>,
+      <<"PROBE", 2>>,
+      <<"PROBE", 2>>,
+      <<"SELECTED", 2>>,
+      <<"PROBE", 2>>,
+      <<"PROBE", 2>>,
+      <<"PROBE", 2>>,
+      <<"PROBE", 2>>,
+      <<"PROBE", 2>>,
+      <<"PROBE", 2>>,
+      <<"PROBE", 2>>,
+      <<"PROBE", 2>>,
+      <<"PROBE", 2>> >>,
+   <<>>,
+   <<>> >>
+/\  State = << [ID |-> 1, Condition |-> "Active", Leader |-> 3, Participating |-> TRUE],
+   [ID |-> 2, Condition |-> "Active", Leader |-> 3, Participating |-> TRUE],
+   [ID |-> 3, Condition |-> "Dead", Leader |-> 3, Participating |-> FALSE] >>
+
+\end{lstlisting}
+
+  \caption{Ring Algorithm last state with violated property. N = 3. State num = 19}
+  \label{ringfailuren3}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}
+/\  MessageBox = <<<<>>, <<>>, <<>>>>
+/\  State = <<
+   [ID |-> 1, Condition |-> "Active", Leader |-> 1, Participating |-> FALSE],
+   [ID |-> 2, Condition |-> "Dead", Leader |-> 2, Participating |-> FALSE],
+   [ID |-> 3, Condition |-> "Dead", Leader |-> 3, Participating |-> FALSE] >>
+\end{lstlisting}
+
+  \caption{Ring algorithm last state with deadlock detection. N = 3. State num = 9}
+  \label{ringdeadlocksuccess}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}
+/\  MessageBox = <<<<>>, <<>>, <<>>>>
+/\  State =
+<< [ID |-> 1, Condition |-> "Active", Leader |-> 3, Participating |-> TRUE],
+   [ID |-> 2, Condition |-> "Dead", Leader |-> 2, Participating |-> FALSE],
+   [ID |-> 3, Condition |-> "Dead", Leader |-> 3, Participating |-> FALSE] >>
+\end{lstlisting}
 
 
+  \caption{Bully Algorithm with last state with violated property. N = 3. State num = 6}
+  \label{bullyfailuren3}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}
+/\  MessageBox = <<<<>>, <<<<1, "ELECTION">>, <<3, "VICTORY">>>>, <<>>, <<>>>>
+/\  State = << [ID |-> 1, Condition |-> "Active", Leader |-> 2, Participating |-> TRUE],
+   [ID |-> 2, Condition |-> "Dead", Leader |-> 2, Participating |-> FALSE],
+   [ID |-> 3, Condition |-> "Dead", Leader |-> 3, Participating |-> FALSE],
+   [ID |-> 4, Condition |-> "Dead", Leader |-> 4, Participating |-> FALSE] >>
+\end{lstlisting}
+
+
+  \caption{Bully Algorithm with last state with violated property. N = 4. State num = 9}
+  \label{bullyfailuren4}
+\end{figure}
+
+
+\begin{figure}
+\begin{lstlisting}
+/\  MessageBox = <<<<>>, <<<<3, "VICTORY">>>>, <<>>, <<>>>>
+/\  State = << [ID |-> 1, Condition |-> "Active", Leader |-> 1, Participating |-> FALSE],
+   [ID |-> 2, Condition |-> "Dead", Leader |-> 2, Participating |-> FALSE],
+   [ID |-> 3, Condition |-> "Dead", Leader |-> 3, Participating |-> FALSE],
+   [ID |-> 4, Condition |-> "Dead", Leader |-> 4, Participating |-> FALSE] >>
+\end{lstlisting}
+
+  \caption{Bully Algorithm last state with deadlock detection. N = 4. State num = 8}
+  \label{bullydeadlocksuccess}
+\end{figure}
+
+\section{Shortcomings}
+The biggest shortcoming, which has an actual effect on the algorithm is the Neighbour function (Figure \ref{ringneighbour}), which does not accurately model a neighbour in a ring structure, as it assumes that only the leader can die. I decided against modeling the function in a more realistic way, as to focus on attempting to find out why the model would not run as expected.
+
+
+\section{Pseudocode to TLA$^{+}$}
+
+Instead of converting from pseudocode to TLA$^{+}$, I used a set of instructions for both algorithms. Both of these specified the behavior for when a process $p$ wakes up or detects a leader to be dead. As we have assumed that processes that die are removed, there has been no need to model the waking up of a process, thus leaving us only with an option to create a function like \textit{CheckLeader} (Figure \ref{checkleader}.)
+
+However, the approach of using a set of instructions like this, rather than a specific pseudo code has left a lot of ambiguity and things to be interpreted. While this may not seem the case at first glance, a few things aren't specified. Such as in the Ring Algorithm set of instructions (to be called pseudocode from here on), it is not specified when each process should toggle their \textit{participation} status. Neither is it clear to see what the purpose of the \textit{participation} variable is in general. The instruction set does not say at any point that something isn't allowed if a process isn't participating. This along with smaller things both from the Ring Algorithm and the Bully Algorithm has left a lot of interpretation work to do. Although it seems to me that the implementations of both algorithms should work, and follow the pseudocode in a way that makes sense, it does not work, and this might be the fault of too much interpretation work. It is specifically important that everything is modelled in TLA$^{+}$ as it explores every possibility, thus, if some edge case is not described in the pseudocode, and therefore hasn't been implemented, it might be the fault of the model checker not leading to a successful termination state.
 
 
 \chapter{Conclusion}
 
-...While the Bully Algorithm worked fine, the Ring Algorithm did not.
+\begin{callout}
+  Missing
+  \end{callout}
+
+In this project we have implemented the Bully Algorithm and the Ring Algorithm for leader election. The algorithms have been implemented in the language TLA$^{+}$, which is a formal specification language used for designing, modelling, documentation and verification of programs.
+
 
 \bibliography{bibliography}
 
