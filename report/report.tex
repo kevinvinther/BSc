@@ -103,58 +103,59 @@
 
 \chapter{Introduction}
 \begin{callout}
-  TODO: Confidence 0/10:
-
-  What is the significance of Leader Election? What is the significance of TLA+? What do you solve?
+What is the significance of Leader Election? What is the significance of TLA+? What do you solve?
 \end{callout}
+
+Distributed Systems are more important now than they have ever been before.
+
+TLA+ checks...
+
+Leader election is...
+
+
 
 \chapter{Overview}
-\begin{callout}
-TODO: Confidence 1/10
-\end{callout}
-
-This is the main body section.
 
 \section{Leader Election}
 \begin{callout}
 TODO: Confidence 3/10
 \end{callout}
 
-In several algorithms for distributed systems, a process may posses the role of the \textit{leader}. A leader may be required in a system because algorithms typically are not completely symmetrical, and thus the leader can take the lead in initiating the algorithm. \cite{kshemkalyani2011distributed}
+In several algorithms for distributed systems, a process may posses the role of the \textit{leader}. Usually a leader may be required because algorithms typically are not completely symmetrical. Thus, the leader can take the lead in initiating the algorithm. \cite{kshemkalyani2011distributed}
 
-The aim of a leader election algorithm, thus, is to elect a leader from a set of processes. If this leader dies, it is the algorithms job to find a new leader.
+The aim of an algorithm for the Leader Election problem is to elect a leader from a set of processes in a way that all processes can agree on the same leader. This is crucial in a distributed system, as if one process has the wrong leader, it can lead to failure in the system.
 
-This \textit{report?} will search to implement two leader election algorithms: The \textit{Bully Algorithm} and the \textit{Ring Algorithm}\footnote{Also known as the Lelang, Chang and Roberts (LCR) algorithm, but commonly referred to as the Ring algorithm, as will be done in this \texit{report?}}
+%This \textit{report?} will search to implement two leader election algorithms: The \textit{Bully Algorithm} and the \textit{Ring Algorithm}\footnote{Also known as the Lelang, Chang and Roberts (LCR) algorithm, but commonly referred to as the Ring algorithm, as will be done in this \texit{report?}}
+%This should probably be discussed in the introduction.
 
-Both of the algorithms are algorithms that work on graphs. The Bully Algorithm's overlay is a complete, undirected graph, and the Ring Algorithm's overlay is a superimposed undirected ring, and a logical complete graph. Both algorithms assume that:
+This report focuses on the Bully Algorithm and the Ring Algorithm for Leader Election, both of which solve the problem. Both the Ring Algorithm and Bully Algorithm are algorithms that work on graphs. The Bully Algorithm's overlay is a complete, undirected graph, and the Ring Algorithm's overlay is a superimposed undirected ring, and a logical complete graph. Both algorithms assume that:
 \begin{itemize}
   \item The network is reliable. Messages do not get lost.
   \item Nodes may fail at any time, including the leader.
   \item Fail-stop model. Failed nodes are removed from the system forever.
+  \item Messages are asynchronous.
 \end{itemize}
 
 
 \section{Bully Algorithm}
 
-The Bully Algorithm is an algorithm which solves the problem of leader election. The bully algorithm assumes a complete undirected graph.
+The Bully Algorithm solves the Leader Election problem using a complete, undirected graph as its overlay. The elected leader will either be the leader with the lowest ID, or the highest ID. In this report, we go with the assumption that it is the highest ID.
 
-The messages in the algorithm are:
+In the algorithm, three different types of messages can be sent and received. These messages initiate behavior on the receiving process, depending on what the contents of the message is.
 \begin{itemize}
   \item \textit{election}: announce an election
   \item \textit{alive}: response to \textit{election}
   \item \textit{victory}: sent by winner to announce victory
 \end{itemize}
 
-When a process P recovers from failure, or the failure detector indicates that the current leader has failed, P performs the following actions:
-
-
+When a process $p$ recovers from failure, or the failure detector indicates that the current leader has failed, $p$ performs the following actions:
 
 \begin{enumerate}
-\item If P has the highest process ID, it sends a Victory message to all other processes and becomes the new leader. Otherwise, P broadcasts an Election message to all other processes with higher process IDs than itself.
-\item If P receives no alive after sending an Election message, then it broadcasts a Victory message to all other processes and becomes the leader.
-\item If P receives an alive from a process with a higher ID, it sends no further messages for this election and waits for a Victory message. (If there is no Victory message after a period of time, it restarts the process at the beginning.)
-\item If P receives an Election message from another process with a lower ID it sends an alive message back and if it has not already started an election, it starts the election process at the beginning, by sending an Election message to higher-numbered processes.
-\item If P receives a victory message, it treats the sender as the leader.
+\item If $p$ has the highest process \textit{id}, it sends a \textit{victory} message to all other processes and becomes the new leader. Otherwise, $p$ broadcasts an \textit{election} message to all other processes with higher process \textit{id}s than itself.
+\item If $p$ receives no \textit{alive} after sending an \textit{election} message, then it broadcasts a \textit{victory} message to all other processes and becomes the leader.
+\item If $p$ receives an \textit{alive} from a process with a higher \textit{id}, it sends no further messages for this election and waits for a \textit{victory} message. (If there is no \textit{victory} message after a period of time, it restarts the process at the beginning.)
+\item If $p$ receives an \textit{election} message from another process with a lower \textit{id} it sends an \textit{alive} message back and if it has not already started an election, it starts the election process at the beginning, by sending an \textit{election} message to higher-numbered processes.
+\item If $p$ receives a \textit{victory} message, it treats the sender as the leader.
 \end{enumerate}
 
 
@@ -162,9 +163,9 @@ When a process P recovers from failure, or the failure detector indicates that t
 
 \section{Ring Algorithm}
 
-The Ring Algorithm solves the Leader ELection problem. However, unlike the Bully Algorithm, the Ring Algorithm assumes a superimposed undirected ring.
+The Ring Algorithm, like the Bully Algorithm, solves the problem of leader election. However, unlike the Bully Algorith, the Ring Algorithm assumes a superimposed undirected ring. This means that we assume the processes to be in a ring, and create the implementation from this assumption.
 
-The messages in the Ring Algorithm are:
+The Ring Algorithm has two different types of messages, which dictate the behavior of the receiver:
 \begin{itemize}
   \item \textit{probe(id)}: search for the leader
   \item \textit{selected(id)}: announce the result
@@ -197,10 +198,12 @@ When a \textit{selected(x)} message arrives from left neighbour:
         \item else do not forward the \textit{selected} message.
 \end{enumerate}
 (\cite{kshemkalyani2011distributed})
+
 \section{TLA+}
 \begin{callout}
-  write something about distributed systems
+  Write something about distributed systems. Maybe this should just be in the introduction?
 \end{callout}
+
 
 TLA+ (Temporal Language of Actions Plus) is a language for modeling specifications, and widely used for proving algorithms. It has proven to be a very useful tool for proving algorithms, because of they way the language works, by forcing you to write mathematically correct implementations, that can be tested in every possible state.
 
@@ -209,8 +212,7 @@ TLA+ (Temporal Language of Actions Plus) is a language for modeling specificatio
 \section{Converting to TLA+}
 Since we have based ourself on an instruction set rather than pseudocode for what process $p$ should do, it has been more a process of modelling the algorithm correctly, rather than converting it from pseudocode.
 
-\subsection{Deviations from pseudocode}
-The second point in the algorithm described earlier states that, if process $p$ receives no \textit{alive} message after sending an Election message, then it broadcasts an \textit{victory} message to all other processes. Since TLA$^{+}$ does not allow for waiting a specified amount of time, I have made a major modification to the algorithm. Instead of waiting to see, it immediately checks if process P is the process with the highest ID alive, and broadcasts a \textit{victory} message if this is the case. We allow ourself this because \textit{fail-stop model?} assumes that all processes will know the failure of other processes, but it is not specified how. Therefore, we can assume that the process will know that it is the highest process. This is also done in the beginning of the algorithm, when a process checks if a leader is dead. However, the rest of the implementation is as true to the pseudocode \textit{can I call it that?} as possible.
+The second point in the algorithm described earlier states that, if process $p$ receives no \textit{alive} message after sending an Election message, then it broadcasts an \textit{victory} message to all other processes. Since TLA$^{+}$ does not allow for waiting a specified amount of time, I have made a modification to the algorithm. Instead of waiting to see, it immediately checks if process P is the process with the highest ID alive, and broadcasts a \textit{victory} message if this is the case. We allow ourself this because the \textit{fail-stop} assumes that all processes will know the failure of other processes, but it is not specified how. Therefore, we can assume that the process will know that it is the highest process. This is also done in the beginning of the algorithm, when a process checks if a leader is dead. However, the rest of the implementation is as true to the set of instructions as possible.
 
 \section{Setup}
 
@@ -1099,7 +1101,8 @@ We get similar behavior from checking the model of the Bully Algorithm. The temp
 \begin{figure}
 \begin{lstlisting}
 /\  MessageBox = <<<<>>, <<<<1, "ELECTION">>, <<3, "VICTORY">>>>, <<>>, <<>>>>
-/\  State = << [ID |-> 1, Condition |-> "Active", Leader |-> 2, Participating |-> TRUE],
+/\  State =
+<< [ID |-> 1, Condition |-> "Active", Leader |-> 2, Participating |-> TRUE],
    [ID |-> 2, Condition |-> "Dead", Leader |-> 2, Participating |-> FALSE],
    [ID |-> 3, Condition |-> "Dead", Leader |-> 3, Participating |-> FALSE],
    [ID |-> 4, Condition |-> "Dead", Leader |-> 4, Participating |-> FALSE] >>
@@ -1114,7 +1117,8 @@ We get similar behavior from checking the model of the Bully Algorithm. The temp
 \begin{figure}
 \begin{lstlisting}
 /\  MessageBox = <<<<>>, <<<<3, "VICTORY">>>>, <<>>, <<>>>>
-/\  State = << [ID |-> 1, Condition |-> "Active", Leader |-> 1, Participating |-> FALSE],
+/\  State =
+<< [ID |-> 1, Condition |-> "Active", Leader |-> 1, Participating |-> FALSE],
    [ID |-> 2, Condition |-> "Dead", Leader |-> 2, Participating |-> FALSE],
    [ID |-> 3, Condition |-> "Dead", Leader |-> 3, Participating |-> FALSE],
    [ID |-> 4, Condition |-> "Dead", Leader |-> 4, Participating |-> FALSE] >>
