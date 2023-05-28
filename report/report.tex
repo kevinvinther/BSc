@@ -772,7 +772,7 @@ The setup (See Figure \ref{ringsetup}) for the Ring Algorithm is almost identica
 \noindent
 \textbf{Neighbour}\\
 \noindent
-In a ring topology, each process has a left-side neighbour and a right-side neighbour. For the Ring Algorithm we only care about the right-side neighbour. Thus, the \textit{Neighbour} function (Figure \ref{ringneighbour} returns the left-side neighbour. However, there is a flaw in this function. It assumes that only the leaders die, and no non-leaders will die. This is the only deviation from the original specification.
+In a ring topology, each process has a left-side neighbour and a right-side neighbour. For the Ring Algorithm we only care about the right-side neighbour. Thus, the \textit{Neighbour} function (Figure \ref{ringneighbour} returns the left-side neighbour. However, there is a flaw in this function, that makes it deviate from the original pseudocode. It assumes that only the leaders die, and no non-leaders will die. This is the only deviation from the original specification.
 \\\\
 \noindent
 \textbf{Sending Messages}\\
@@ -791,6 +791,7 @@ The \textit{SendMessage} function updates the MessageBox of a process with a Mes
 \tlatex
 
 \@x{}\moduleLeftDash\@xx{HandleMessages}\moduleRightDash\@xx{}%
+
 \@x{ HandleMessages ( p ) \.{\defeq} \.{\LET}}%
 \@x{\@s{49.19} id \.{\defeq} Head ( MessageBox [ p ] ) [ 2 ]}%
 \@x{\@s{49.19} msg \.{\defeq} Head ( MessageBox [ p ] ) [ 1 ]}%
@@ -806,7 +807,12 @@ The \textit{SendMessage} function updates the MessageBox of a process with a Mes
  The message box shouldn\mbox{'}t be empty
 }%
 \@xx{}%
-\@x{\@s{49.19} \.{\land} \.{\lor} \.{\land} msg \.{=}\@w{PROBE}}%
+ \@x{\@s{49.19} \.{\land} \.{\lor} \.{\land} State [ id ] . Condition
+ \.{=}\@w{Dead}}%
+ \@x{\@s{71.42} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
+ {\bang} [ p ] \.{=} Tail ( MessageBox [ p ] ) ]}%
+\@x{\@s{71.42} \.{\land} {\UNCHANGED} State}%
+\@x{\@s{60.31} \.{\lor} \.{\land} msg \.{=}\@w{PROBE}}%
 \@y{\@s{0}%
  If the message is \ensuremath{PROBE
 }}%
@@ -826,13 +832,18 @@ The \textit{SendMessage} function updates the MessageBox of a process with a Mes
  If \ensuremath{p \.{=} id}, send \ensuremath{SELECTED
 }}%
 \@xx{}%
- \@x{\@s{93.64} \.{\land} SendMessageAndTailMessageBox ( p ,\, Neighbour ( p )
- ,\, p ,\,\@w{SELECTED} )}%
-\@x{\@s{82.53} \.{\lor} \.{\land} p \.{>} id\@s{4.1}}%
+ \@x{\@s{93.64} \.{\land} SendMessageAndEmptyMessageBox ( p ,\, Neighbour ( p
+ ) ,\, p ,\,\@w{SELECTED} )}%
+ \@x{\@s{82.53} \.{\lor} \.{\land} p \.{>} id\@s{4.1} \.{\land} State [ p ] .
+ Participating \.{=} {\FALSE}}%
 \@y{\@s{0}%
  If \ensuremath{p \.{>} id} ignore message
 }%
 \@xx{}%
+ \@x{\@s{93.64} \.{\land} SendMessageAndTailMessageBox ( p ,\, Neighbour ( p )
+ ,\, p ,\,\@w{PROBE} )}%
+ \@x{\@s{82.53} \.{\lor} \.{\land} p \.{>} id \.{\land} State [ p ] .
+ Participating \.{=} {\TRUE}}%
  \@x{\@s{93.64} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
  {\bang} [ p ] \.{=} Tail ( MessageBox [ p ] ) ]}%
 \@x{\@s{82.53} \.{\lor} \.{\land} p \.{<} id}%
@@ -866,29 +877,29 @@ The \textit{SendMessage} function updates the MessageBox of a process with a Mes
  \@x{\@s{93.64} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
  {\bang} [ p ] \.{=} {\langle} {\rangle} ]}%
 
-
 \@x{}\bottombar\@xx{}%
 
-  \caption{HandleMessage}
+  \caption{HandleMessages}
   \label{ringhandlemessages}
   \end{figure}
-
-  \begin{calloutyellow}
-    needs polish
-    \end{calloutyellow}
 
 Instead of having separate functions for handling the different messages, all of this is done in the \textit{HandleMessages} function (Figure \ref{ringhandlemessages}).
 
 The function checks if there are any messages for process $p$, and then proceeds to check what kind of message the first message is.
-
+\\\\
+\noindent
+\textbf{Receiving a \textit{probe} message}\\
+\noindent
 In case the message received is \textit{probe}, we check first if process $p$ is participating. If it is not, we change the \textit{participating} field to be true.
 
 Afterwards, we compare $p$ with the \textit{id} from the message.
-If $p = id$, then we send the ``SELECTED'' message to the neighbour. Then the message box of $p$ is emptied. This is to ensure that no election keeps on going indefinitely.
-If $p > id$, we ignore the message and just delete it. This is because we want the process with the highest ID alive to be the leader, not just the first process to send a \textit{probe}.
+If $p = id$, then the probe has circled around all processes, and we send the ``SELECTED'' message to the neighbour. The message box of $p$ is then emptied. We empty the message box to ensure that there aren't any excess messages that will harm the election.\\
+If $p > id$, we deviate from the original pseudocode. The original pseudocode states that: ``if p > id, discard the probe.'' However, this leads to cases with infinite loops of \textit{probe} messages. Thus, instead what we do is, if $p > id$ and $p$ is not participating in the election, we send a new \textit{probe} message with $p$ as the id, so that it can become the leader. If $p$ however is participating, we just discard the message.\\
 If $p < id$ we send the probe to the right  neighbour, and delete the message.
-
-
+\\\\
+\noindent
+\textbf{Receiving a \textit{selected} message}\\
+\noindent
 In case the msg is ``SELECTED'' we do not need to check whether or not the process is participating in the election, as they will have participated no matter what, as the \textit{probe} message has been all around the ring. If the $id \neq p$ then we note $id$ to be the leader and set our participation status to be \textsc{False}. We also send the \textit{selected} message to our right neighbour, so that everyone knows who the new leader is. However, if $p = id$ then $p$ is the leader, and he is noted as such by himself. There is a slight deviation from the pseudocode here. In the pseudocode it is stated that $p$ is noted by itself to be the leader, when it first sends the \textit{selected} message to its right neighbour. However, due to the limitations of TLA$^{+}$, I have decided against doing it there, as it would require a check of participation in each equality check with the \textit{id} when it receives the \textit{probe} message. This solution is simply easier to look at. The desired outcome will be the same, i.e. every process having the same leader and not being participating.
 
 
@@ -942,12 +953,7 @@ When we check if the leader is dead in the Ring Algorithm (See Figure \ref{ringc
 \label{ringnextleader}
 \end{figure}
 
-\begin{callout}
-  too vague
-  \end{callout}
-
 KillLeader and the next predicate are identical to the Bully Algorithm.
-
 
 \section{Invariants and Properties}
 
@@ -1007,6 +1013,21 @@ KillLeader and the next predicate are identical to the Bully Algorithm.
 
 The Ring Algorithm does not introduce any new invariants or properties (Figure \ref{ringinvariants}) that the Bully Algorithm does not already have. However, the invariant \textit{Participating} (Figure \ref{bullyinvariantsproperties}) is not present. The Participating invariant does not work in the Ring Algorithm, since it checks whether or not a leader is participating, however, a leader will participate in the election if it receives a \textit{probe} message.
 However, all of the other invariants and properties are identical to those of the Bully Algorithm.
+
+\section{Temporal Formula}
+
+\begin{figure}
+  \tlatex
+\@x{}\moduleLeftDash\@xx{Temporal Formula}\moduleRightDash\@xx{}%
+ \@x{ Spec\@s{1.46} \.{\defeq} Init \.{\land} {\Box} [ Next ]_{ {\langle}
+ State ,\, MessageBox {\rangle}} \.{\land} {\SF}_{ {\langle} State ,\,
+ MessageBox {\rangle}} ( Next )}%
+\@x{}\bottombar\@xx{}%
+  \caption{Temporal Formula}
+  \label{ringtemporalformula}
+  \end{figure}
+
+  Like in the Bully Algorithm, the Ring Algorithm also uses a temporal formula rather than stating the initial predicate and the next-state relation in the model checker. Like in the Bully Algorithm, this is done to use \textit{strong fairness}.
 
 \chapter{Evaluation}
 \section{The Model Checker}
