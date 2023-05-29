@@ -127,18 +127,18 @@ The goal of this project is to model the algorithms in the TLA$^{+}$ specificati
 \chapter{Overview}
 
 \section{Leader Election}
-\begin{callout}
-TODO: Confidence 3/10
-\end{callout}
 
-In several algorithms for distributed systems, a process may posses the role of the \textit{leader}. Usually a leader may be required because algorithms typically are not completely symmetrical. Thus, the leader can take the lead in initiating the algorithm. \cite{kshemkalyani2011distributed}
+In several algorithms for distributed systems, a process may posses the role of the \textit{leader}. Usually a leader may be required because distributed algorithms typically are not completely symmetrical. Thus, the leader can take the lead in initiating the algorithm. This also saves resources in the system, as it ensures that only the leader will the initiative in an algorithm, and that other processes won't do it as well.
+\cite{kshemkalyani2011distributed}
 
-The aim of an algorithm for the Leader Election problem is to elect a leader from a set of processes in a way that all processes can agree on the same leader. This is crucial in a distributed system, as if one process has the wrong leader, it can lead to failure in the system.
+The aim of an algorithm for the Leader Election problem is to elect a leader from a set of processes in a way that all processes can agree on the same leader. It is crucial that all processes agree on the same leader, as if one process has the wrong leader, it can lead to many failures in the system.
 
 %This \textit{report?} will search to implement two leader election algorithms: The \textit{Bully Algorithm} and the \textit{Ring Algorithm}\footnote{Also known as the Lelang, Chang and Roberts (LCR) algorithm, but commonly referred to as the Ring algorithm, as will be done in this \texit{report?}}
 %This should probably be discussed in the introduction.
 
-This report focuses on the Bully Algorithm and the Ring Algorithm for Leader Election, both of which solve the problem. Both the Ring Algorithm and Bully Algorithm are algorithms that work on graphs. The Bully Algorithm's overlay is a complete, undirected graph, and the Ring Algorithm's overlay is a superimposed undirected ring, and a logical complete graph. For both of the algorithms, we assume that:
+This project focuses on the Bully Algorithm and the Ring Algorithm for Leader Election, both of which solve the problem. The Ring Algorithm works on a complete graph, with an undirected ring superimposed. The Bully Algorithm works on a complete undirected graph.
+
+For the Bully and Ring Algorithm we assume that:
 \begin{itemize}
   \item The network is reliable. Messages do not get lost.
   \item Nodes may fail at any time, including the leader.
@@ -174,13 +174,13 @@ In this version of the pseudocode, we assume that the leader will eventually bec
 
 The Ring Algorithm, like the Bully Algorithm, solves the problem of leader election. However, unlike the Bully Algorithm, the Ring Algorithm assumes a superimposed undirected ring. This means that we assume the processes to be in a ring, and create the implementation from this assumption.
 
-In the Ring Algorithm exists two different types of messages. Both messages dictate the behavior of the receiver:
+In the Ring Algorithm, there exists two different types of messages. Both messages dictate the behavior of the receiver:
 \begin{itemize}
   \item \textit{probe(id)}: search for the leader
   \item \textit{selected(id)}: announce the result
 \end{itemize}
 
-You will notice in the messages, that they have attached an \textit{id}. While it may read as if it is a function, it is just an attachment to the message. The \textit{id} is used to identify who originally sent the message.
+You will notice in the messages, that, unlike in the Bully Algorithm, they have attached an \textit{id}. While it may read as if it is a function, it is just an attachment to the message. The \textit{id} is used to identify who originally sent the message.
 
 Furthermore, the Ring Algorithm requires a \textit{boolean} variable, called \textit{participate}. The variable indicates whether or not process $P_{i}$ participates in the election.
 
@@ -208,7 +208,7 @@ When a \textit{selected(x)} message arrives from left neighbour:
 \end{enumerate}
 (\cite{kshemkalyani2011distributed})
 
-In this algorithm, like in the bully algorithm, we assume that the leader will be the process with the highest id alive.
+In this algorithm, like in the Bully Algorithm, we assume that the leader will be the process with the highest id alive.
 
 \chapter{Bully Algorithm}
 
@@ -1119,11 +1119,11 @@ In this project we have implemented the Bully Algorithm and the Ring Algorithm f
 
 \appendix
 
-\chapter{Bully Algorithm Implementation}
+\chapter{Bully Algorithm TLA$^{+}$ model}
 
 
 
-\chapter{Ring Algorithm Implementation}
+\chapter{Ring Algorithm TLA$^{+}$ model}
 
 
 \end{document}
