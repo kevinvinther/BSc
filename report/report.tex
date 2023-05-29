@@ -102,15 +102,25 @@
 \tableofcontents
 
 \chapter{Introduction}
-\begin{callout}
-What is the significance of Leader Election? What is the significance of TLA+? What do you solve?
-\end{callout}
 
-Distributed Systems are more important now than they have ever been before.
 
-TLA+ checks...
+Today, more than ever before, distributed systems are crucial in computer infrastructure. However, they are also notoriously difficult to implement correctly. Even only a few interacting processes in a distributed system can lead to a tremendous amount of states. Catching each bug and edge case in the many possible states can take an enormous amount of time, and be exceedingly challenging.
 
-Leader election is...
+Distributed leader election is a distributed algorithm which requires that all processes in a distributed system agree on one specific process as their leader. This is crucial for many modern systems as distributed algorithms are typically not completely symmetrical, and therefore some process has to take the lead in initiating the algorithm. Furthermore, it saves resources by making sure that no process other than the leader replicates the algorithm initiation.
+
+Because of the challenge of using conventional tools to verify that a distributed algorithm works as intended in a distributed system, we use techniques from formal verification methods.
+
+We seek to verify the correctness of two distributed leader election algorithms: the Bully Algorithm and the Ring Algorithm\footnote{The Ring Algorithm is a familiar name for the Lelang, Chang and Roberts algorithm (also known as LCR). We will continue to use the name ``Ring Algorithm''.}.
+
+
+We do this using techniques from formal methods to check if there are any bugs, concurrency issues, security issues in the algorithm. Throughout this project the TLA$^{+}$ (Temporal Logic of Actions Plus) verification suite is used, to model the Ring and Bully Algorithm
+
+
+The goal of this project is to model the algorithms in the TLA$^{+}$ specification language, and verify them using the TLC model checker included in the verification suite. The TLC model verifies the algorithm by going through each possible state, and making sure that it produces satisfiable behavior.
+
+
+
+
 
 
 
@@ -128,7 +138,7 @@ The aim of an algorithm for the Leader Election problem is to elect a leader fro
 %This \textit{report?} will search to implement two leader election algorithms: The \textit{Bully Algorithm} and the \textit{Ring Algorithm}\footnote{Also known as the Lelang, Chang and Roberts (LCR) algorithm, but commonly referred to as the Ring algorithm, as will be done in this \texit{report?}}
 %This should probably be discussed in the introduction.
 
-This report focuses on the Bully Algorithm and the Ring Algorithm for Leader Election, both of which solve the problem. Both the Ring Algorithm and Bully Algorithm are algorithms that work on graphs. The Bully Algorithm's overlay is a complete, undirected graph, and the Ring Algorithm's overlay is a superimposed undirected ring, and a logical complete graph. Both algorithms assume that:
+This report focuses on the Bully Algorithm and the Ring Algorithm for Leader Election, both of which solve the problem. Both the Ring Algorithm and Bully Algorithm are algorithms that work on graphs. The Bully Algorithm's overlay is a complete, undirected graph, and the Ring Algorithm's overlay is a superimposed undirected ring, and a logical complete graph. For both of the algorithms, we assume that:
 \begin{itemize}
   \item The network is reliable. Messages do not get lost.
   \item Nodes may fail at any time, including the leader.
@@ -141,10 +151,10 @@ This report focuses on the Bully Algorithm and the Ring Algorithm for Leader Ele
 
 The Bully Algorithm solves the Leader Election problem using a complete, undirected graph as its overlay. The elected leader will either be the leader with the lowest ID, or the highest ID. In this report, we go with the assumption that it is the highest ID.
 
-In the algorithm, three different types of messages can be sent and received. These messages initiate behavior on the receiving process, depending on what the contents of the message is.
+In the algorithm, there exists three different types of message to be sent and received. These messages initiate behavior on the receiving process, depending on what the contents of the message is. The messages are:
 \begin{itemize}
-  \item \textit{election}: announce an election
-  \item \textit{alive}: response to \textit{election}
+  \item \textit{election}: sent to announce an election
+  \item \textit{alive}: sent to respond to an \textit{election} message
   \item \textit{victory}: sent by winner to announce victory
 \end{itemize}
 
@@ -158,22 +168,21 @@ When a process $p$ recovers from failure, or the failure detector indicates that
 \item If $p$ receives a \textit{victory} message, it treats the sender as the leader.
 \end{enumerate}
 
-
-
+In this version of the pseudocode, we assume that the leader will eventually become the process with the highest id alive.
 
 \section{Ring Algorithm}
 
-The Ring Algorithm, like the Bully Algorithm, solves the problem of leader election. However, unlike the Bully Algorith, the Ring Algorithm assumes a superimposed undirected ring. This means that we assume the processes to be in a ring, and create the implementation from this assumption.
+The Ring Algorithm, like the Bully Algorithm, solves the problem of leader election. However, unlike the Bully Algorithm, the Ring Algorithm assumes a superimposed undirected ring. This means that we assume the processes to be in a ring, and create the implementation from this assumption.
 
-The Ring Algorithm has two different types of messages, which dictate the behavior of the receiver:
+In the Ring Algorithm exists two different types of messages. Both messages dictate the behavior of the receiver:
 \begin{itemize}
   \item \textit{probe(id)}: search for the leader
   \item \textit{selected(id)}: announce the result
 \end{itemize}
 
-You will notice in the messages, that they have attached an \textit{id}. The \textit{id} is used to identify who originally sent the message.
+You will notice in the messages, that they have attached an \textit{id}. While it may read as if it is a function, it is just an attachment to the message. The \textit{id} is used to identify who originally sent the message.
 
-Furthermore, the Ring Algorithm uses a \textit{boolean} variable, called \textit{participate}. This variable is required for the algorithm, and indicates whether or not process $P_{i}$ participates in the election.
+Furthermore, the Ring Algorithm requires a \textit{boolean} variable, called \textit{participate}. The variable indicates whether or not process $P_{i}$ participates in the election.
 
 \noindent
 When process $P_{i}$ wakes up to participate in the election:
@@ -199,13 +208,15 @@ When a \textit{selected(x)} message arrives from left neighbour:
 \end{enumerate}
 (\cite{kshemkalyani2011distributed})
 
+In this algorithm, like in the bully algorithm, we assume that the leader will be the process with the highest id alive.
+
 \chapter{Bully Algorithm}
 
 \section{Converting to TLA+}
 Since we have based ourself on an instruction set rather than pseudocode for what process $p$ should do, it has been more a process of modelling the algorithm correctly, rather than converting it from pseudocode.
 
 The second point in the algorithm described earlier states that, if process $p$ receives no \textit{alive} message after sending an Election message, then it broadcasts an \textit{victory} message to all other processes. Since TLA$^{+}$ does not allow for waiting a specified amount of time, I have made a modification to the algorithm. Instead of waiting to see, it immediately checks if process P is the process with the highest ID alive, and broadcasts a \textit{victory} message if this is the case. We allow ourself this because the \textit{fail-stop} assumes that all processes will know the failure of other processes, but it is not specified how. Therefore, we can assume that the process will know that it is the highest process. This is also done in the beginning of the algorithm, when a process checks if a leader is dead. However, the rest of the implementation is as true to the set of instructions as possible.
-
+Furthermore, I have made a modification to point 4. However, since this is not done because of limitations of TLA$^{+}$, it is discussed in Section \ref{bullyreceivemessagessection}.
 \section{Setup}
 
 \begin{figure}
@@ -338,7 +349,7 @@ The \textit{SendVictory} function is similar, only it sends the \textit{victory}
 
 Similar to the \textit{victory} message, the \textit{election} message is sent to a select group of processes. This time it's all processes with a higher ID than $p$. This is achieved using a helper function \textit{HigherIDs} (see figure \ref{higherids}.)
 
-\section{Handling Received Messages}
+\section{Handling Received Messages} \label{bullyreceivemessagessection}
 
 
 \begin{figure}
@@ -1031,124 +1042,58 @@ However, all of the other invariants and properties are identical to those of th
 
 \chapter{Evaluation}
 \section{The Model Checker}
-Both the Ring Algorithm and the Bully Algorithm have been thoroughly checked with the TLC Model Checker, which comes with the TLA$^{+}$ toolbox.
+Both the Ring Algorithm and the Bully Algorithm have been thoroughly checked with the TLC Model Checker, which comes with the TLA$^{+}$ toolbox. The Ring Algorithm has been checked with $n = 1..10$, where $n$ is the number of processes. The Bully Algorithm has been checked with $n = 1..5$. Both algorithms pass the checker without any errors, invariant violations or temporal property violations.
 
-With the current code specification, the temporal property \textit{ElectionWillEnd} (Figure \ref{ringinvariants} and \ref{bullyinvariantsproperties}) is violated. This is not a problem with the \textit{ElectionWillEnd} property, but a problem with the specification. See Figure \ref{ringfailuren4} for the values of the variables at the state where the property is violated. As you can see, it looks as if the \textit{selected} message is just about to get to the third process, which would render it the leader. However, this does not happen before the property is violated. You can see a similar result in Figure \ref{ringfailuren3}, in which the \textit{selected} message never gets to the process which should become the new leader. Instead, the first process is flooded with probe messages, if which only 2 get sent on.
+You can see the state space progress, with the diameter, number of states found and distinct states for the Ring Algorithm in Table \ref{numstatesmodelcheckerringalgorithm} and for the Bully Algorithm in Table \ref{numstatesmodelcheckerbullyalgorithm}.
+\\\\
+\noindent
+\textbf{Ring Algorithm}\\
+\noindent
+\begin{calloutyellow}
+  Should the $r^{2}$ be said? I'm really unsure about this part in general
+  \end{calloutyellow}
+As you can see in table \ref{numstatesmodelcheckerringalgorithm}, the number of states found increase exponentially ($r^{2} = 0.9964$).
 
-It should be noted that, if we do turn off the \textit{ElectionWillEnd} we get an infinitely running program\footnote{It might not be running infinitely, but with $n = 3$ it ran for 1,5 until there was no more space on my hard drive.}. However, if we turn on checking for deadlocks, we get states which seemingly work fine, and have attained the goal of electing a leader (See Figure \ref{ringdeadlocksuccess} for an example state), except for the last process not seeing itself as the leader yet, and still participating in the election. However, this should have been ``fixed'' in the next state. But, as per how the deadlock detection works in TLC, we cannot generalize this do mean that the entire specification works.
-
-We get similar behavior from checking the model of the Bully Algorithm. The temporal property \textit{ElectionWillEnd} fails. See Figure \ref{bullyfailuren3} and \ref{bullyfailuren4}. In the figure where $n = 3$, we can see that it is almost finished with the election, and should declare itself as the leader in the next state, but the \textit{ElectionWillEnd} property stops this. When $n=4$, we have similar behavior, where only one process is left and needs to declare itself the leader. Note, that this is done in the \textit{CheckLeader} function (Figure \ref{checkleader}), so it will be done, but the property is violated before it gets the chance. However, as was the case with the Ring Algorithm, if \textit{ElectionWillEnd} is turned off, we get an infinitely running specification.
-
-\begin{callout}
-  Maybe these should not be figures? Or Maybe they should be in the appendix?
-  \end{callout}
-
-\begin{figure}
-  \begin{lstlisting}
-/\  MessageBox =
-<< << <<"PROBE", 3>>,
-      <<"PROBE", 3>>,
-      <<"PROBE", 3>>,
-      <<"PROBE", 3>>,
-      <<"PROBE", 3>> >>,
-   <<<<"SELECTED", 3>>, <<"PROBE", 3>>, <<"PROBE", 3>>>>,
-   <<>>,
-   <<>> >>
-/\  State =
-<< [ID |-> 1, Condition |-> "Active", Leader |-> 3, Participating |-> TRUE],
-   [ID |-> 2, Condition |-> "Active", Leader |-> 4, Participating |-> TRUE],
-   [ID |-> 3, Condition |-> "Active", Leader |-> 4, Participating |-> TRUE],
-   [ID |-> 4, Condition |-> "Dead", Leader |-> 4, Participating |-> FALSE] >>
-
-  \end{lstlisting}
-
-  \caption{Ring Algorithm last state with violated property. N = 4. State num = 16}
-  \label{ringfailuren4}
-\end{figure}
-
-\begin{figure}
-\begin{lstlisting}
-/\  MessageBox = << << <<"SELECTED", 2>>,
-      <<"PROBE", 2>>,
-      <<"PROBE", 2>>,
-      <<"SELECTED", 2>>,
-      <<"PROBE", 2>>,
-      <<"PROBE", 2>>,
-      <<"PROBE", 2>>,
-      <<"PROBE", 2>>,
-      <<"PROBE", 2>>,
-      <<"PROBE", 2>>,
-      <<"PROBE", 2>>,
-      <<"PROBE", 2>>,
-      <<"PROBE", 2>> >>,
-   <<>>,
-   <<>> >>
-/\  State = << [ID |-> 1, Condition |-> "Active", Leader |-> 3, Participating |-> TRUE],
-   [ID |-> 2, Condition |-> "Active", Leader |-> 3, Participating |-> TRUE],
-   [ID |-> 3, Condition |-> "Dead", Leader |-> 3, Participating |-> FALSE] >>
-
-\end{lstlisting}
-
-  \caption{Ring Algorithm last state with violated property. N = 3. State num = 19}
-  \label{ringfailuren3}
-\end{figure}
-
-\begin{figure}
-\begin{lstlisting}
-/\  MessageBox = <<<<>>, <<>>, <<>>>>
-/\  State = <<
-   [ID |-> 1, Condition |-> "Active", Leader |-> 1, Participating |-> FALSE],
-   [ID |-> 2, Condition |-> "Dead", Leader |-> 2, Participating |-> FALSE],
-   [ID |-> 3, Condition |-> "Dead", Leader |-> 3, Participating |-> FALSE] >>
-\end{lstlisting}
-
-  \caption{Ring algorithm last state with deadlock detection. N = 3. State num = 9}
-  \label{ringdeadlocksuccess}
-\end{figure}
-
-\begin{figure}
-\begin{lstlisting}
-/\  MessageBox = <<<<>>, <<>>, <<>>>>
-/\  State =
-<< [ID |-> 1, Condition |-> "Active", Leader |-> 3, Participating |-> TRUE],
-   [ID |-> 2, Condition |-> "Dead", Leader |-> 2, Participating |-> FALSE],
-   [ID |-> 3, Condition |-> "Dead", Leader |-> 3, Participating |-> FALSE] >>
-\end{lstlisting}
+\noindent
+\textbf{Bully Algorithm}\\
+\noindent
 
 
-  \caption{Bully Algorithm with last state with violated property. N = 3. State num = 6}
-  \label{bullyfailuren3}
-\end{figure}
 
-\begin{figure}
-\begin{lstlisting}
-/\  MessageBox = <<<<>>, <<<<1, "ELECTION">>, <<3, "VICTORY">>>>, <<>>, <<>>>>
-/\  State =
-<< [ID |-> 1, Condition |-> "Active", Leader |-> 2, Participating |-> TRUE],
-   [ID |-> 2, Condition |-> "Dead", Leader |-> 2, Participating |-> FALSE],
-   [ID |-> 3, Condition |-> "Dead", Leader |-> 3, Participating |-> FALSE],
-   [ID |-> 4, Condition |-> "Dead", Leader |-> 4, Participating |-> FALSE] >>
-\end{lstlisting}
+\begin{table}[]
+  \centering
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+$n$ & Diameter & States Found & Distinct States & Queue Size \\ \hline
+1   & 1        & 1            & 1               & 0          \\ \hline
+2   & 3        & 3            & 3               & 0          \\ \hline
+3   & 9        & 17           & 13              & 0          \\ \hline
+4   & 19       & 66           & 38              & 0          \\ \hline
+5   & 27       & 232          & 101             & 0          \\ \hline
+6   & 40       & 773          & 262             & 0          \\ \hline
+7   & 53       & 2478         & 676             & 0          \\ \hline
+8   & 69       & 7710         & 1760            & 0          \\ \hline
+9   & 87       & 23434        & 4584            & 0          \\ \hline
+10  & 107      & 69923        & 11967           & 0          \\ \hline
+\end{tabular}
+  \caption{Number of states found with the model checker in the Ring Algorithm}
+  \label{numstatesmodelcheckerringalgorithm}
+\end{table}
+\begin{table}[]
+\centering
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+$n$ & Diameter & States Found & Distinct States & Queue Size \\ \hline
+1   & 1        & 1            & 1               & 0          \\ \hline
+2   & 3        & 3            & 3               & 0          \\ \hline
+3   & 7        & 50           & 28              & 0          \\ \hline
+4   & 14       & 7235         & 2628            & 0          \\ \hline
+5   & 29       & 7315267      & 2090268         & 0          \\ \hline
+\end{tabular}
+  \caption{Number of states found with the model checker in the Bully Algorithm}
+  \label{numstatesmodelcheckerbullyalgorithm}
+\end{table}
 
-
-  \caption{Bully Algorithm with last state with violated property. N = 4. State num = 9}
-  \label{bullyfailuren4}
-\end{figure}
-
-
-\begin{figure}
-\begin{lstlisting}
-/\  MessageBox = <<<<>>, <<<<3, "VICTORY">>>>, <<>>, <<>>>>
-/\  State =
-<< [ID |-> 1, Condition |-> "Active", Leader |-> 1, Participating |-> FALSE],
-   [ID |-> 2, Condition |-> "Dead", Leader |-> 2, Participating |-> FALSE],
-   [ID |-> 3, Condition |-> "Dead", Leader |-> 3, Participating |-> FALSE],
-   [ID |-> 4, Condition |-> "Dead", Leader |-> 4, Participating |-> FALSE] >>
-\end{lstlisting}
-
-  \caption{Bully Algorithm last state with deadlock detection. N = 4. State num = 8}
-  \label{bullydeadlocksuccess}
-\end{figure}
 
 \section{Shortcomings}
 The biggest shortcoming, which has an actual effect on the algorithm is the Neighbour function (Figure \ref{ringneighbour}), which does not accurately model a neighbour in a ring structure, as it assumes that only the leader can die. I decided against modeling the function in a more realistic way, as to focus on attempting to find out why the model would not run as expected.
