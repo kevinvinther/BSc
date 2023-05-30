@@ -687,7 +687,7 @@ To run the specification with the model checker, the temporal formula in Figure 
 
 
 \section{Similarities to Bully Algorithm}
-The Ring Algorithm and the Bully Algorithm are both similar in many ways. One similarity which carries over from our implementation of the Bully Algorithm to the Ring Algorithm is the modeling of the graphs. Since the Ring Algorithm is also an algorithm on graphs, we can reuse a lot of the setup. Furthermore, the Ring Algorithms superimposed overlay is an undirected ring. We will not need to model it is a ring, even though it is a ring. Instead, we assume it to be a ring, and write the specification as if it was a ring.
+The Ring Algorithm and the Bully Algorithm are both similar in many ways. Since both algorithms are algorithms on graphs, we can reuse a lot of the setup. Furthermore, the Ring Algorithms superimposed overlay is an undirected ring. We will not need to model it is a ring, even though it is a ring. Instead, we assume it to be a ring, and write the specification as if it was a ring.
 
 
 \section{Setup}
@@ -729,7 +729,7 @@ The Ring Algorithm and the Bully Algorithm are both similar in many ways. One si
   \label{ringsetup}
 \end{figure}
 
-The setup (See Figure \ref{ringsetup}) for the Ring Algorithm is almost identical to that of the Bully Algorithm. The only difference is how we define the \textbf{Message}s. A message in the Ring Algorithm has been changed in two ways. First, we don't send the same messages in the Ring Algorihtm. The messages in the Ring Algorithm are \textit{probe} and \textit{selected}. Second, we switch the order of message and process. In the Bully Algorithm it made sense to have the ProcessID as the first part of the message, since it is the sender of the message. In the Ring Algorithm, the process id is the ID of the message, and not the sender. Since both messages in the Ring Algorithm have an ID attached to them, the messages instead have the process on the right side. However, this is purely a syntactic choice.
+The setup (Figure \ref{ringsetup}) for the Ring Algorithm is almost identical to that of the Bully Algorithm. The only difference is how we define the \textbf{Message}s. A message in the Ring Algorithm has been changed in two ways. First, we don't send the same messages in the Ring Algorihtm. The messages in the Ring Algorithm are \textit{probe} and \textit{selected}. Second, we switch the order of message and process. In the Bully Algorithm it made sense to have the ProcessID as the first part of the message, since it is the sender of the message. In the Ring Algorithm, the process id is the ID of the message, and not the sender. Since both messages in the Ring Algorithm have an ID attached to them, the messages instead have the process on the right side. However, this is purely a syntactic choice.
 
 
 \section{Neighbours and Sending Messages}
@@ -787,12 +787,12 @@ The setup (See Figure \ref{ringsetup}) for the Ring Algorithm is almost identica
 \noindent
 \textbf{Neighbour}\\
 \noindent
-In a ring topology, each process has a left-side neighbour and a right-side neighbour. For the Ring Algorithm we only care about the right-side neighbour. Thus, the \textit{Neighbour} function (Figure \ref{ringneighbour} returns the left-side neighbour. However, there is a flaw in this function, that makes it deviate from the original pseudocode. It assumes that only the leaders die, and no non-leaders will die. This is the only deviation from the original specification.
+In a ring topology, each process has a left-side neighbour and a right-side neighbour. For the Ring Algorithm we only care about the right-side neighbour. Thus, the \textit{Neighbour} function (Figure \ref{ringneighbour} returns the left-side neighbour. It does this first by checking if the process asking for its neighbour is the process with the highest id alive, and if so it returns the lowest id alive. Otherwise, it uses \textsc{Choose} to choose the process whose id is higher than p, but lower than every other process whose id is higher than p.
 \\\\
 \noindent
 \textbf{Sending Messages}\\
 \noindent
-We deviate a lot from the Bully algorithm in how messages are sent. Instead of having functions for specific messages, we have two functions \textit{SendMessage} and \textit{SendMessageAndTailMessageBox}. In the Bully Algorithm, a lot had to be done when sending each message. In the Ring Algorithm, messages are only sent to neighbours, thus requiring less work choosing who to send to. In the Bully Algorithm this work was done in the sender functions, but this work is not needed in the Ring Algorithm.
+We deviate a lot from the Bully algorithm in how messages are sent. Instead of having functions for specific messages, we have two functions \textit{SendMessage} and \textit{SendMessageAndTailMessageBox} (Figure \ref{ringsendingmessages}). In the Bully Algorithm, a lot had to be done when sending each message. In the Ring Algorithm, messages are only sent to neighbours, thus requiring less work choosing who to send to. In the Bully Algorithm this work was done in the sender functions, but this work is not needed in the Ring Algorithm.
 
 The \textit{SendMessage} function updates the MessageBox of a process with a Message. The \textit{SendMessageAndTailMessageBox} is similar, except it also removes the first message in the MessageBox of $p$. This is done, because the \textit{HandleMessages} function requries both sending messages and deleting in the same state. However, in TLA$^{+}$ you cannot update a variable twice in the same state, thus requiring a function like \textit{SendMessageAndTailMessageBox} to update both message boxes at the same time. \textit{SendMessageAndEmptyMessageBox} is similar to \textit{SendMessageAndTailMessageBox}, but instead of deleting just the first message, it deletes all messages.
 
@@ -908,14 +908,14 @@ The function checks if there are any messages for process $p$, and then proceeds
 In case the message received is \textit{probe}, we check first if process $p$ is participating. If it is not, we change the \textit{participating} field to be true.
 
 Afterwards, we compare $p$ with the \textit{id} from the message.
-If $p = id$, then the probe has circled around all processes, and we send the ``SELECTED'' message to the neighbour. The message box of $p$ is then emptied. We empty the message box to ensure that there aren't any excess messages that will harm the election.\\
+If $p = id$, then the probe has circled around all processes, and we send the \textit{selected} message to the neighbour. The message box of $p$ is then emptied. We empty the message box to ensure that there aren't any excess messages that will harm the election.\\
 If $p > id$, we deviate from the original pseudocode. The original pseudocode states that: ``if p > id, discard the probe.'' However, this leads to cases with infinite loops of \textit{probe} messages. Thus, instead what we do is, if $p > id$ and $p$ is not participating in the election, we send a new \textit{probe} message with $p$ as the id, so that it can become the leader. If $p$ however is participating, we just discard the message.\\
 If $p < id$ we send the probe to the right  neighbour, and delete the message.
 \\\\
 \noindent
 \textbf{Receiving a \textit{selected} message}\\
 \noindent
-In case the msg is ``SELECTED'' we do not need to check whether or not the process is participating in the election, as they will have participated no matter what, as the \textit{probe} message has been all around the ring. If the $id \neq p$ then we note $id$ to be the leader and set our participation status to be \textsc{False}. We also send the \textit{selected} message to our right neighbour, so that everyone knows who the new leader is. However, if $p = id$ then $p$ is the leader, and he is noted as such by himself. There is a slight deviation from the pseudocode here. In the pseudocode it is stated that $p$ is noted by itself to be the leader, when it first sends the \textit{selected} message to its right neighbour. However, due to the limitations of TLA$^{+}$, I have decided against doing it there, as it would require a check of participation in each equality check with the \textit{id} when it receives the \textit{probe} message. This solution is simply easier to look at. The desired outcome will be the same, i.e. every process having the same leader and not being participating.
+In case the msg is \textit{selected} we do not need to check whether or not the process is participating in the election, as they will have participated no matter what, as the \textit{probe} message has been all around the ring. If the $id \neq p$ then we note $id$ to be the leader and set our participation status to be \textsc{False}. We also send the \textit{selected} message to our right neighbour, so that everyone knows who the new leader is. However, if $p = id$ then $p$ is the leader, and he is noted as such by himself. There is a slight deviation from the pseudocode here. In the pseudocode it is stated that $p$ is noted by itself to be the leader, when it first sends the \textit{selected} message to its right neighbour. However, due to the limitations of TLA$^{+}$, I have decided against doing it there, as it would require a check of participation in each equality check with the \textit{id} when it receives the \textit{probe} message. This solution is simply easier to look at. The desired outcome will be the same, i.e. every process having the same leader and not being participating.
 
 
 \section{Checking The Leader Condition}
@@ -944,7 +944,7 @@ Participating \.{=} {\TRUE} ]}%
   \end{figure}
 
 
-When we check if the leader is dead in the Ring Algorithm (See Figure \ref{ringcheckleader}), we do it a bit differently than in the Bully Algorithm. Here, the only check we, other than to see if the leader is dead, do is to see if there is only one process remaining. If this is the case, we set that one process as the leader, and its participation status to be \textsc{False} ending the election (once and for all). However, if this is not the case, we send a \textit{probe} message to the right neighbour and set $p$s participation status to \textsc{True}.
+When we check if the leader is dead in the Ring Algorithm (Figure \ref{ringcheckleader}), we do it a bit differently than in the Bully Algorithm. Here, the only check we, other than to see if the leader is dead, do is to see if there is only one process remaining. If this is the case, we set that one process as the leader, and its participation status to be \textsc{False} ending the election (once and for all). However, if this is not the case, we send a \textit{probe} message to the right neighbour and set $p$s participation status to \textsc{True}.
 
 \section{Next state relation and killing the leader}
 
@@ -968,7 +968,7 @@ When we check if the leader is dead in the Ring Algorithm (See Figure \ref{ringc
 \label{ringnextleader}
 \end{figure}
 
-KillLeader and the next state relation are identical to the Bully Algorithm.
+KillLeader and the next state relation (Figure \ref{ringnextleader}) are identical to the Bully Algorithm.
 
 \section{Invariants and Properties}
 
@@ -1042,7 +1042,7 @@ However, all of the other invariants and properties are identical to those of th
   \label{ringtemporalformula}
   \end{figure}
 
-  Like in the Bully Algorithm, the Ring Algorithm also uses a temporal formula rather than stating the initial predicate and the next-state relation in the model checker. Like in the Bully Algorithm, this is done to use \textit{strong fairness}.
+Like in the Bully Algorithm, the Ring Algorithm also uses a temporal formula (Figure \ref{ringtemporalformula}) rather than stating the initial predicate and the next-state relation in the model checker. Like in the Bully Algorithm, this is done to use \textit{strong fairness}.
 
 \chapter{Evaluation}
 \section{The Model Checker}
