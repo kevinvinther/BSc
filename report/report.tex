@@ -651,7 +651,6 @@ In TLA$^{+}$, an \textit{invariant} is a statement that must be true on every st
 For the message box it holds that each ID will map to a sequence of messages.
 
 In this specification, we also have an invariant called \textit{UniqueID} which makes sure that no two processes hold the same ID. Furthermore, we also have an invariant called \textit{Participating} which states that, if a process is participating in an election, it cannot be the leader itself, or see itself as leader.
-
 \\\\
 \noindent
 \textbf{Properties}\\
@@ -1046,39 +1045,36 @@ Like in the Bully Algorithm, the Ring Algorithm also uses a temporal formula (Fi
 
 \chapter{Evaluation}
 \section{The Model Checker}
-Both the Ring Algorithm and the Bully Algorithm have been thoroughly checked with the TLC Model Checker, which comes with the TLA$^{+}$ toolbox. The Ring Algorithm has been checked with $n = 1..10$, where $n$ is the number of processes. The Bully Algorithm has been checked with $n = 1..5$. Both algorithms pass the checker without any errors, invariant violations or temporal property violations.
+Both the Ring Algorithm and the Bully Algorithm have been thoroughly checked with the TLC Model Checker, which comes with the TLA$^{+}$ toolbox. The Ring Algorithm has been checked with $n = 1..10$, where $n$ is the number of processes. The Bully Algorithm has been checked with $n = 1..5$. Both algorithms pass the checker without any errors, invariant violations or temporal property violations. As it is the case that there have been no violations from both algorithms with $n = 1..10$ and $n = 1..5$, we can assume it to be true that the models and algorithms are verified to be correct.
 
 You can see the state space progress, with the diameter, number of states found and distinct states for the Ring Algorithm in Table \ref{numstatesmodelcheckerringalgorithm} and for the Bully Algorithm in Table \ref{numstatesmodelcheckerbullyalgorithm}.
 \\\\
 \noindent
 \textbf{Ring Algorithm}\\
 \noindent
-\begin{calloutyellow}
-  Should the $r^{2}$ be said? I'm really unsure about this part in general
-  \end{calloutyellow}
-As you can see in table \ref{numstatesmodelcheckerringalgorithm}, the number of states found increase exponentially ($r^{2} = 0.9964$).
-
+As you can see in table \ref{numstatesmodelcheckerringalgorithm}, the number of states increase exponentially, but in a way that makes sense. I believe that, although there has been some modifications, the algorithm runs as it should.
+\\\\
 \noindent
 \textbf{Bully Algorithm}\\
 \noindent
-
+As you can see in table \ref{numstatesmodelcheckerbullyalgorithm}, the number of states, like the Ring Algorithm rise exponentially, although much faster here. The reason for only going to $n = 5$, rather than $n = 10$ as with the Ring Algorithm is the amount of time it takes for the model checker to be done. With $n = 5$ in the Bully Algorithm it took 8 minutes and 23 seconds, to contrast, it only took 2 seconds with $n = 4$. I do not believe that this is an error in the algorithm that only kicks in when $n = 4$, but I do believe that there are some unnecessary states that are being checked, hence the rapid acceleration of states compared to the Ring Algorithm. Both do grow somewhat exponentially, but the Bully Algorithm grows much faster than the Ring Algorithm. I believe that the algorithm runs as it should, and it gets to the correct termination state, but there may be some redundant messages, however I have not discovered the ``issue'', if there is one.
 
 
 \begin{table}[]
   \centering
 \begin{tabular}{|l|l|l|l|l|}
 \hline
-$n$ & Diameter & States Found & Distinct States & Queue Size \\ \hline
-1   & 1        & 1            & 1               & 0          \\ \hline
-2   & 3        & 3            & 3               & 0          \\ \hline
-3   & 9        & 17           & 13              & 0          \\ \hline
-4   & 19       & 66           & 38              & 0          \\ \hline
-5   & 27       & 232          & 101             & 0          \\ \hline
-6   & 40       & 773          & 262             & 0          \\ \hline
-7   & 53       & 2478         & 676             & 0          \\ \hline
-8   & 69       & 7710         & 1760            & 0          \\ \hline
-9   & 87       & 23434        & 4584            & 0          \\ \hline
-10  & 107      & 69923        & 11967           & 0          \\ \hline
+$n$ & Diameter & States Found & Distinct States  \\ \hline
+1   & 1        & 1            & 1                \\ \hline
+2   & 3        & 3            & 3                \\ \hline
+3   & 9        & 17           & 13               \\ \hline
+4   & 19       & 66           & 38               \\ \hline
+5   & 27       & 232          & 101              \\ \hline
+6   & 40       & 773          & 262              \\ \hline
+7   & 53       & 2478         & 676              \\ \hline
+8   & 69       & 7710         & 1760             \\ \hline
+9   & 87       & 23434        & 4584             \\ \hline
+10  & 107      & 69923        & 11967            \\ \hline
 \end{tabular}
   \caption{Number of states found with the model checker in the Ring Algorithm}
   \label{numstatesmodelcheckerringalgorithm}
@@ -1098,36 +1094,591 @@ $n$ & Diameter & States Found & Distinct States & Queue Size \\ \hline
   \label{numstatesmodelcheckerbullyalgorithm}
 \end{table}
 
-
 \section{Shortcomings}
-The biggest shortcoming, which has an actual effect on the algorithm is the Neighbour function (Figure \ref{ringneighbour}), which does not accurately model a neighbour in a ring structure, as it assumes that only the leader can die. I decided against modeling the function in a more realistic way, as to focus on attempting to find out why the model would not run as expected.
 
+The only shortcoming is that only the leader gets killed, and not any of the other processes, in spite of the assumption that any process including (but not limited to) the leader can die. This has been a deliberate choice, as it is enough to show that when a leader dies, the rest of the processes will find a new leader that they can all agree on together.
 
 \section{Pseudocode to TLA$^{+}$}
 
-Instead of converting from pseudocode to TLA$^{+}$, I used a set of instructions for both algorithms. Both of these specified the behavior for when a process $p$ wakes up or detects a leader to be dead. As we have assumed that processes that die are removed, there has been no need to model the waking up of a process, thus leaving us only with an option to create a function like \textit{CheckLeader} (Figure \ref{checkleader}.)
+Instead of converting from pseudocode to TLA$^{+}$, I used a set of instructions for both algorithms. Both of these specified the behavior for when a process $p$ wakes up or detects a leader to be dead. As we have assumed that processes that die are removed, there has been no need to model the waking up of a process, thus leaving us only with an option to create a function like \textit{CheckLeader}. This is also the reason that the implementation of the Ring Algorithm is so different when the process id is higher than the id in the message. If it was only when the process checked when the leader died, a lot of messages would float around that were of no use.
 
-However, the approach of using a set of instructions like this, rather than a specific pseudo code has left a lot of ambiguity and things to be interpreted. While this may not seem the case at first glance, a few things aren't specified. Such as in the Ring Algorithm set of instructions (to be called pseudocode from here on), it is not specified when each process should toggle their \textit{participation} status. Neither is it clear to see what the purpose of the \textit{participation} variable is in general. The instruction set does not say at any point that something isn't allowed if a process isn't participating. This along with smaller things both from the Ring Algorithm and the Bully Algorithm has left a lot of interpretation work to do. Although it seems to me that the implementations of both algorithms should work, and follow the pseudocode in a way that makes sense, it does not work, and this might be the fault of too much interpretation work. It is specifically important that everything is modelled in TLA$^{+}$ as it explores every possibility, thus, if some edge case is not described in the pseudocode, and therefore hasn't been implemented, it might be the fault of the model checker not leading to a successful termination state.
+The approach of using a set of instructions like this, rather than a specific pseudo code has left a lot of ambiguity and things to be interpreted. While this may not seem the case at first glance, a few things aren't specified. Such as in the Ring Algorithm, in the pseudocode it is not specified when each process should toggle their \textit{participation} status back to \textsc{False}. Neither is it clear to see what the purpose of the \textit{participation} variable is in general. The instruction set does not say at any point that something isn't allowed if a process isn't participating. This along with smaller things both from the Ring Algorithm and the Bully Algorithm has left a lot of interpretation work to do. Although both algorithms work properly, there may be some unseen mistakes that, although the algorithm still works, do hinder it in some way. This might also be the reason for the huge amount of states in the Bully Algorithm. I have changed the algorithm sufficiently to comply with what seemed sensible, but this change might have come from misinterpretation in the algorithm. Nevertheless, both algorithms are successful.
 
 
 \chapter{Conclusion}
 
-\begin{callout}
-  Missing
-  \end{callout}
+In this project we have implemented the Bully Algorithm and the Ring Algorithm for leader election. The algorithms have been modeled in the  TLA$^{+}$ specification language and thoroughly checked with the TLC model checker.
 
-In this project we have implemented the Bully Algorithm and the Ring Algorithm for leader election. The algorithms have been implemented in the language TLA$^{+}$, which is a formal specification language used for designing, modelling, documentation and verification of programs.
+Throughout the implementation of the algorithms, the pseudocode has been followed, but also modified to work correctly with TLA$^{+}$ and our assumption of the \textit{fail-stop} model. As the pseudocode format was a list of instructions rather than traditional pseudocode for both algorithms, some interperation has been done on both algorithms, which may have caused minor problems, such as an excess of states in the Bully Algorithm. Nevertheless, both of the algorithm have been showed with the TLC model checker to be verified correct.
 
+We have assumed a \textit{fail-stop} model, the network to be reliable, and that no nodes can come back to life. This means that any other cases have not been considered such as messages getting lost, processes not learning of other processes deaths, or nodes becoming alive again after being dead.
 
 \bibliography{bibliography}
 
 \appendix
 
 \chapter{Bully Algorithm TLA$^{+}$ model}
+\tlatex
+\@x{}\moduleLeftDash\@xx{ {\MODULE} BullyAlgorithm}\moduleRightDash\@xx{}%
+\@pvspace{8.0pt}%
+\@x{ {\EXTENDS} Naturals ,\, FiniteSets ,\, Sequences ,\, TLC}%
+\@pvspace{8.0pt}%
+\@x{ {\CONSTANT} N}%
+\@pvspace{8.0pt}%
+\@x{ {\ASSUME} N \.{\in} Nat}%
+\@pvspace{8.0pt}%
+\@x{ ProcessID \.{\defeq} 1 \.{\dotdot} N}%
+\@pvspace{8.0pt}%
+\@x{ {\VARIABLES} State ,\, MessageBox}%
+\@pvspace{8.0pt}%
+ \@x{ Message \.{\defeq} ProcessID \.{\times} \{\@w{ELECTION} ,\,\@w{ALIVE}
+ ,\,\@w{VICTORY} \}}%
+\@pvspace{8.0pt}%
+ \@x{ Init \.{\defeq} \.{\land} State \.{=} [ p\@s{9.46} \.{\in} ProcessID
+ \.{\mapsto}}%
+\@x{\@s{109.06} [ ID \.{\mapsto} p ,\,}%
+\@x{\@s{109.06} Condition \.{\mapsto}\@w{Active} ,\,}%
+\@x{\@s{109.06} Leader \.{\mapsto} N ,\,}%
+\@x{\@s{109.06} Participating \.{\mapsto} {\FALSE} ] ]}%
+ \@x{\@s{35.70} \.{\land} MessageBox \.{=} [ p \.{\in} ProcessID \.{\mapsto}
+ {\langle} {\rangle} ]}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Finds the maximum \ensuremath{ID} which is not dead
+}%
+\@xx{}%
+\@x{ MaxAliveID \.{\defeq} {\CHOOSE} id \.{\in} ProcessID \.{:}}%
+ \@x{\@s{80.15} \A\, p \.{\in} ProcessID \.{:} State [ p ] . Condition
+ \.{=}\@w{Dead}}%
+\@x{\@s{163.18} \.{\lor} id \.{\geq} State [ p ] . ID}%
+\@pvspace{8.0pt}%
+ \@x{ HigherIDs ( p ) \.{\defeq} \{ q \.{\in} 1 \.{\dotdot} MaxAliveID \.{:} q
+ \.{>} p \}}%
+\@pvspace{8.0pt}%
+\@x{ SendAliveAndTail ( p ,\, q ) \.{\defeq}}%
+ \@x{\@s{16.4} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT} {\bang} [ q
+ ]\@s{0.25} \.{=} Append ( MessageBox [ q ] ,\, {\langle} p ,\,\@w{ALIVE}
+ {\rangle} ) ,\,}%
+\@x{\@s{185.43} {\bang} [ p ] \.{=} Tail ( MessageBox [ p ] ) ]}%
+\@pvspace{8.0pt}%
+\@x{ SendVictory ( p ) \.{\defeq}}%
+\@x{\@s{16.4} MessageBox \.{'} \.{=} [ q \.{\in} ProcessID \.{\mapsto}}%
+ \@x{\@s{49.19} {\IF} q \.{\neq} p \.{\land} State [ q ] . Condition
+ \.{=}\@w{Active}}%
+ \@x{\@s{49.19} \.{\THEN} Append ( MessageBox [ q ] ,\, {\langle} p
+ ,\,\@w{VICTORY} {\rangle} )}%
+\@x{\@s{49.19} \.{\ELSE} MessageBox [ q ] ]}%
+\@pvspace{8.0pt}%
+\@x{ SendVictoryAndTail ( p ) \.{\defeq}}%
+\@x{\@s{16.4} MessageBox \.{'} \.{=} [ q \.{\in} ProcessID \.{\mapsto}}%
+\@x{\@s{32.8} {\IF} State [ q ] . Condition \.{=}\@w{Active}}%
+ \@x{\@s{32.8} \.{\THEN} {\IF} q \.{=} p \.{\THEN} Tail ( MessageBox [ q ] )
+ \.{\ELSE} Append ( MessageBox [ q ] ,\, {\langle} p ,\,\@w{VICTORY}
+ {\rangle} )}%
+\@x{\@s{32.8} \.{\ELSE} MessageBox [ q ] ]}%
+\@pvspace{8.0pt}%
+\@x{ SendElection ( p ) \.{\defeq}}%
+\@x{\@s{16.4} MessageBox \.{'} \.{=} [ q \.{\in} ProcessID \.{\mapsto}}%
+ \@x{\@s{32.8} {\IF} q \.{\in} HigherIDs ( p ) \.{\land} State [ q ] .
+ Condition \.{=}\@w{Active}}%
+ \@x{\@s{32.8} \.{\THEN} Append ( MessageBox [ q ] ,\, {\langle} p
+ ,\,\@w{ELECTION} {\rangle} )}%
+\@x{\@s{32.8} \.{\ELSE} MessageBox [ q ] ]}%
+\@pvspace{8.0pt}%
+ \@x{ ReceiveAlive ( p ,\, q ) \.{\defeq} \.{\land} State [ p ] .
+ Participating \.{=} {\TRUE}}%
+\@y{\@s{0}%
+ Make sure they are already participating
+}%
+\@xx{}%
+\@x{\@s{98.58} \.{\land} p \.{>} q}%
+ \@x{\@s{98.58} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Participating \.{=} {\FALSE} ]}%
+\@y{\@s{0}%
+ No longer participate
+}%
+\@xx{}%
+\@pvspace{8.0pt}%
+ \@x{ ReceiveElection ( p ,\, q ) \.{\defeq}\@s{4.1} \.{\lor} \.{\land} p
+ \.{=} MaxAliveID}%
+\@x{\@s{126.95} \.{\land} SendVictoryAndTail ( p )}%
+ \@x{\@s{126.95} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Participating \.{=} {\FALSE} ,\,}%
+\@x{\@s{244.46} {\bang} [ p ] . Leader \.{=} p ]}%
+\@x{\@s{115.84} \.{\lor} \.{\land} p \.{\neq} MaxAliveID}%
+ \@x{\@s{126.95} \.{\land} \.{\lor} \.{\land} State [ p ] . Participating
+ \.{=} {\TRUE}}%
+\@x{\@s{149.18} \.{\land} SendAliveAndTail ( p ,\, q )}%
+\@x{\@s{149.18} \.{\land} {\UNCHANGED} State}%
+ \@x{\@s{138.07} \.{\lor} \.{\land} State [ p ] . Participating \.{=}
+ {\FALSE}}%
+\@x{\@s{149.18} \.{\land} SendAliveAndTail ( p ,\, q )}%
+ \@x{\@s{149.18} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Participating \.{=} {\TRUE} ]}%
+\@pvspace{8.0pt}%
+ \@x{ ReceiveVictory ( p ,\, q ) \.{\defeq} State \.{'} \.{=} [ State
+ {\EXCEPT} {\bang} [ p ] . Leader \.{=} q ]}%
+\@y{\@s{0}%
+ Set the leader of receiver to \ensuremath{p} sender
+}%
+\@xx{}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Handle messages
+}%
+\@xx{}%
+\@x{ HandleMessages ( p ) \.{\defeq} \.{\LET}}%
+\@x{\@s{93.62} sender \.{\defeq} Head ( MessageBox [ p ] ) [ 1 ]}%
+\@x{\@s{93.62} msg \.{\defeq} Head ( MessageBox [ p ] ) [ 2 ]}%
+\@x{\@s{93.62} \.{\IN}}%
+\@x{\@s{97.72} \.{\land} State [ p ] . Condition \.{=}\@w{Active}}%
+ \@x{\@s{97.72} \.{\land} MessageBox [ p ] \.{\neq} {\langle}
+ {\rangle}\@s{4.1}}%
+\@y{\@s{0}%
+ Message box shouldn\mbox{'}t be empty
+}%
+\@xx{}%
+ \@x{\@s{97.72} \.{\land} \.{\lor} \.{\land} State [ sender ] . Condition
+ \.{=}\@w{Dead}}%
+ \@x{\@s{119.95} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
+ {\bang} [ p ] \.{=} Tail ( MessageBox [ p ] ) ]}%
+\@y{\@s{0}%
+ Remove first message
+}%
+\@xx{}%
+\@x{\@s{119.95} \.{\land} {\UNCHANGED} State}%
+\@x{\@s{108.84} \.{\lor} \.{\land} msg \.{=}\@w{VICTORY}}%
+\@y{\@s{0}%
+ If the message is \ensuremath{VICTORY
+}}%
+\@xx{}%
+\@x{\@s{119.95} \.{\land} ReceiveVictory ( p ,\, sender )}%
+ \@x{\@s{119.95} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
+ {\bang} [ p ] \.{=} {\langle} {\rangle} ]}%
+\@y{\@s{0}%
+ Remove all messages, so that the election does not run forever.
+}%
+\@xx{}%
+\@x{\@s{108.84} \.{\lor} \.{\land} msg \.{=}\@w{ELECTION}}%
+\@y{\@s{0}%
+ If the message is \ensuremath{ELECTION
+}}%
+\@xx{}%
+\@x{\@s{119.95} \.{\land} ReceiveElection ( p ,\, sender )}%
+\@y{\@s{0}%
+ Tail is done incide \ensuremath{ReceiveElection
+}}%
+\@xx{}%
+\@x{\@s{108.84} \.{\lor} \.{\land} msg \.{=}\@w{ALIVE}}%
+\@y{\@s{0}%
+ If the message is \ensuremath{ALIVE
+}}%
+\@xx{}%
+\@x{\@s{119.95} \.{\land} ReceiveAlive ( p ,\, sender )}%
+\@y{\@s{0}%
+ Handle in \ensuremath{ReceiveAlive
+}}%
+\@xx{}%
+ \@x{\@s{119.95} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
+ {\bang} [ p ] \.{=} Tail ( MessageBox [ p ] ) ]}%
+\@y{\@s{0}%
+ Remove first message
+}%
+\@xx{}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ If the leader is found to be dead
+}%
+\@xx{}%
+ \@x{ CheckLeader ( p ) \.{\defeq}\@s{8.2} \.{\land} State [ p ] . Condition
+ \.{=}\@w{Active}}%
+ \@x{\@s{96.12} \.{\land} State [ State [ p ] . Leader ] . Condition
+ \.{=}\@w{Dead}}%
+\@x{\@s{96.12} \.{\land} \.{\lor} \.{\land} p \.{=} MaxAliveID}%
+\@x{\@s{118.35} \.{\land} SendVictory ( p )}%
+ \@x{\@s{118.35} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Participating \.{=} {\FALSE} ,\, {\bang} [ p ] . Leader \.{=} p ]}%
+\@x{\@s{107.24} \.{\lor} \.{\land} p \.{\neq} MaxAliveID}%
+\@x{\@s{118.35} \.{\land} State [ p ] . Participating \.{=} {\FALSE}}%
+\@x{\@s{118.35} \.{\land} SendElection ( p )}%
+ \@x{\@s{118.35} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Participating \.{=} {\TRUE} ]}%
+\@pvspace{8.0pt}%
+\@x{ KillLeader \.{\defeq}}%
+\@x{\@s{12.29} \.{\land} State [ MaxAliveID ] . Leader \.{=} MaxAliveID}%
+ \@x{\@s{12.29} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [
+ MaxAliveID ] . Condition \.{=}\@w{Dead} ,\, {\bang} [ MaxAliveID ] .
+ Participating \.{=} {\FALSE} ]}%
+ \@x{\@s{12.29} \.{\land} Cardinality ( \{ p \.{\in} ProcessID \.{:} State [ p
+ ] . Condition \.{=}\@w{Active} \} ) \.{\geq} 2}%
+\@x{\@s{12.29} \.{\land} {\UNCHANGED} MessageBox}%
+\@pvspace{8.0pt}%
+\@x{ Next \.{\defeq} \.{\lor} KillLeader}%
+ \@x{\@s{39.83} \.{\lor} \E\, p \.{\in} 1 \.{\dotdot} MaxAliveID \.{:}
+ CheckLeader ( p ) \.{\lor} HandleMessages ( p )}%
+\@pvspace{8.0pt}%
+ \@x{ Spec\@s{1.46} \.{\defeq} Init \.{\land} {\Box} [ Next ]_{ {\langle}
+ State ,\, MessageBox {\rangle}} \.{\land} {\SF}_{ {\langle} State ,\,
+ MessageBox {\rangle}} ( Next )}%
+\@x{}\midbar\@xx{}%
+\@x{}%
+\@y{\@s{0}%
+ Invariants
+}%
+\@xx{}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Each variable should be within the type constraints
+}%
+\@xx{}%
+\@x{ TypeOK \.{\defeq} \A\, p \.{\in} ProcessID \.{:}}%
+\@x{\@s{41.35} \.{\land} State [ p ] . ID \.{\in} ProcessID}%
+ \@x{\@s{41.35} \.{\land} State [ p ] . Condition \.{\in} \{\@w{Active}
+ ,\,\@w{Dead} \}}%
+\@x{\@s{41.35} \.{\land} State [ p ] . Leader \.{\in} ProcessID}%
+\@x{\@s{41.35} \.{\land} State [ p ] . Participating \.{\in} {\BOOLEAN}}%
+ \@x{\@s{41.35} \.{\land} MessageBox \.{\in} [ ProcessID \.{\rightarrow} Seq (
+ Message ) ]}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Every process should have a unique \ensuremath{ID
+}}%
+\@xx{}%
+ \@x{ UniqueID \.{\defeq} \A\, p ,\, q \.{\in} ProcessID \.{:} ( State [ p ] .
+ ID \.{=} State [ q ] . ID ) \.{\implies} ( p \.{=} q )}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ If a process is participating in the election, then it should not be the
+ leader
+}%
+\@xx{}%
+ \@x{ Participating \.{\defeq} \A\, p \.{\in} ProcessID \.{:} State [ p ] .
+ Participating \.{=} {\TRUE} \.{\implies} State [ p ] . Leader \.{\neq} p}%
+\@x{}\midbar\@xx{}%
+\@x{}%
+\@y{\@s{0}%
+ Properties
+}%
+\@xx{}%
+ \@x{ ElectionTerminationImpliesSameLeader \.{\defeq} \A\, p ,\, q \.{\in}
+ ProcessID \.{:}}%
+\@x{\@s{16.4} ( State [ p ] . Condition \.{=}\@w{Active}}%
+\@x{\@s{16.4} \.{\land} State [ q ] . Condition \.{=}\@w{Active}}%
+\@x{\@s{16.4} \.{\land} State [ p ] . Participating \.{=} {\FALSE}}%
+ \@x{\@s{16.4} \.{\land} State [ q ] . Participating\@s{0.25} \.{=} {\FALSE}
+ )}%
+ \@x{\@s{16.4} \.{\implies} ( State [ p ] . Leader \.{=} State [ q ] . Leader
+ )}%
+\@pvspace{16.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ The highest alive process should become the leader
+}%
+\@xx{}%
+\@x{ HighestAliveProcessIsLeader \.{\defeq} \A\, p \.{\in} ProcessID \.{:}}%
+\@x{\@s{16.4} State [ p ] . Participating \.{=} {\FALSE} \.{\implies}}%
+ \@x{\@s{16.4} ( State [ MaxAliveID ] . Condition \.{=}\@w{Active}
+ \.{\implies} State [ p ] . Leader \.{=} MaxAliveID )}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Eventually, the election will end
+}%
+\@xx{}%
+ \@x{ ElectionWillEnd \.{\defeq} \A\, p \.{\in} ProcessID \.{:} State [ p ] .
+ Participating \.{\leadsto} State [ p ] . Participating \.{=} {\FALSE}}%
+\@pvspace{8.0pt}%
+\@x{}\bottombar\@xx{}%
 
 
 
 \chapter{Ring Algorithm TLA$^{+}$ model}
+\tlatex
+\@x{}\moduleLeftDash\@xx{ {\MODULE} RingAlgorithm}\moduleRightDash\@xx{}%
+\@pvspace{8.0pt}%
+\@x{ {\EXTENDS} Naturals ,\, FiniteSets ,\, Sequences ,\, TLC}%
+\@pvspace{8.0pt}%
+\@x{ {\CONSTANT} N}%
+\@pvspace{8.0pt}%
+\@x{ {\ASSUME} N \.{\in} Nat}%
+\@pvspace{8.0pt}%
+\@x{ ProcessID \.{\defeq} 1 \.{\dotdot} N}%
+\@pvspace{8.0pt}%
+\@x{ {\VARIABLES} State ,\, MessageBox}%
+\@pvspace{8.0pt}%
+ \@x{ Message \.{\defeq} \{\@w{PROBE} ,\,\@w{SELECTED} \} \.{\times}
+ ProcessID}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Initializes the variables: \ensuremath{State} and \ensuremath{MessageBox
+}}%
+\@xx{}%
+ \@x{ Init \.{\defeq} \.{\land} State \.{=} [ p\@s{9.46} \.{\in} ProcessID
+ \.{\mapsto} [}%
+\@x{\@s{109.06} ID \.{\mapsto} p ,\,}%
+\@x{\@s{109.06} Condition \.{\mapsto}\@w{Active} ,\,}%
+\@x{\@s{109.06} Leader \.{\mapsto} N ,\,}%
+\@x{\@s{109.06} Participating \.{\mapsto} {\FALSE} ] ]}%
+ \@x{\@s{35.70} \.{\land} MessageBox \.{=} [ p \.{\in} ProcessID \.{\mapsto}
+ {\langle} {\rangle} ]}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Finds the highest \ensuremath{ID} that is not dead.
+}%
+\@xx{}%
+\@x{ MaxAliveID \.{\defeq} {\CHOOSE} id \.{\in} ProcessID \.{:}}%
+\@x{\@s{32.8} \A\, p \.{\in} ProcessID \.{:}}%
+\@x{\@s{44.12} State [ p ] . Condition \.{=}\@w{Dead} \.{\lor} id \.{\geq} p}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Get the next alive process
+}%
+\@xx{}%
+\@x{ Neighbour ( p ) \.{\defeq}}%
+ \@x{\@s{16.4} \.{\LET} AliveProcesses \.{\defeq} \{ q \.{\in} ProcessID \.{:}
+ State [ q ] . Condition \.{=}\@w{Active} \}}%
+\@x{\@s{16.4} \.{\IN}}%
+ \@x{\@s{16.4} {\IF} p \.{=} MaxAliveID \.{\THEN} {\CHOOSE} q \.{\in}
+ AliveProcesses \.{:} {\TRUE} \.{\ELSE}}%
+\@x{\@s{51.73} {\CHOOSE} neighbour \.{\in} AliveProcesses \.{:}}%
+\@x{\@s{94.51} \.{\land} p \.{<} neighbour}%
+ \@x{\@s{94.51} \.{\land} \A\, q \.{\in} AliveProcesses \.{:} q \.{\leq} p
+ \.{\lor} neighbour \.{\leq} q}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Sends a message and removes the head from the inbox. Sends message
+ \ensuremath{msg} to \ensuremath{q} with \ensuremath{id} \ensuremath{id},
+}%
+\@xx{}%
+\@x{}%
+\@y{\@s{0}%
+ and removes the first message from \ensuremath{p}.
+}%
+\@xx{}%
+\@x{ SendMessageAndTailMessageBox ( p ,\, q ,\, id ,\, msg ) \.{\defeq}}%
+ \@x{\@s{49.19} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT} {\bang} [ q ]
+ \.{=} Append ( MessageBox [ q ] ,\, {\langle} msg ,\, id {\rangle} ) ,\,}%
+\@x{\@s{126.26} {\bang} [ p ] \.{=} Tail ( MessageBox [ p ] ) ]}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Simple \ensuremath{SendMessage}. Sends message \ensuremath{msg} to
+ \ensuremath{q} with \ensuremath{id} \ensuremath{id}.
+}%
+\@xx{}%
+\@x{ SendMessage ( q ,\, id ,\, msg ) \.{\defeq}}%
+ \@x{\@s{61.65} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT} {\bang} [ q ]
+ \.{=} Append ( MessageBox [ q ] ,\, {\langle} msg ,\, id {\rangle} ) ]}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Send message to \ensuremath{q} and empty message box of \ensuremath{p
+}}%
+\@xx{}%
+\@x{ SendMessageAndEmptyMessageBox ( p ,\, q ,\, id ,\, msg ) \.{\defeq}}%
+ \@x{\@s{49.19} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT} {\bang} [ q ]
+ \.{=} Append ( MessageBox [ q ] ,\, {\langle} msg ,\, id {\rangle} ) ,\,
+ {\bang} [ p ] \.{=} {\langle} {\rangle} ]}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Handle Messages
+}%
+\@xx{}%
+\@x{ HandleMessages ( p ) \.{\defeq} \.{\LET}}%
+\@x{\@s{49.19} id \.{\defeq} Head ( MessageBox [ p ] ) [ 2 ]}%
+\@x{\@s{49.19} msg \.{\defeq} Head ( MessageBox [ p ] ) [ 1 ]}%
+\@x{\@s{49.19} \.{\IN}}%
+\@x{\@s{49.19} \.{\land} State [ p ] . Condition \.{=}\@w{Active}}%
+\@y{\@s{0}%
+ Only if the process is active
+}%
+\@xx{}%
+ \@x{\@s{49.19} \.{\land} MessageBox [ p ] \.{\neq} {\langle}
+ {\rangle}\@s{43.80}}%
+\@y{\@s{0}%
+ The message box shouldn\mbox{'}t be empty
+}%
+\@xx{}%
+ \@x{\@s{49.19} \.{\land} \.{\lor} \.{\land} State [ id ] . Condition
+ \.{=}\@w{Dead}}%
+ \@x{\@s{71.42} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
+ {\bang} [ p ] \.{=} Tail ( MessageBox [ p ] ) ]}%
+\@x{\@s{71.42} \.{\land} {\UNCHANGED} State}%
+\@x{\@s{60.31} \.{\lor} \.{\land} msg \.{=}\@w{PROBE}}%
+\@y{\@s{0}%
+ If the message is \ensuremath{PROBE
+}}%
+\@xx{}%
+ \@x{\@s{71.42} \.{\land} \.{\lor} \.{\land} State [ p ] . Participating \.{=}
+ {\FALSE}}%
+\@y{\@s{0}%
+ Make sure the participation status is \ensuremath{{\TRUE}
+}}%
+\@xx{}%
+ \@x{\@s{93.64} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Participating \.{=} {\TRUE} ]}%
+\@x{\@s{82.53} \.{\lor} \.{\land} State [ p ] . Participating \.{=} {\TRUE}}%
+\@x{\@s{93.64} \.{\land} {\UNCHANGED} State}%
+\@x{\@s{71.42} \.{\land} \.{\lor} \.{\land} p \.{=} id}%
+\@y{\@s{0}%
+ If \ensuremath{p \.{=} id}, send \ensuremath{SELECTED
+}}%
+\@xx{}%
+ \@x{\@s{93.64} \.{\land} SendMessageAndEmptyMessageBox ( p ,\, Neighbour ( p
+ ) ,\, p ,\,\@w{SELECTED} )}%
+ \@x{\@s{82.53} \.{\lor} \.{\land} p \.{>} id\@s{4.1} \.{\land} State [ p ] .
+ Participating \.{=} {\FALSE}}%
+\@y{\@s{0}%
+ If \ensuremath{p \.{>} id} ignore message
+}%
+\@xx{}%
+ \@x{\@s{93.64} \.{\land} SendMessageAndTailMessageBox ( p ,\, Neighbour ( p )
+ ,\, p ,\,\@w{PROBE} )}%
+ \@x{\@s{82.53} \.{\lor} \.{\land} p \.{>} id \.{\land} State [ p ] .
+ Participating \.{=} {\TRUE}}%
+ \@x{\@s{93.64} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
+ {\bang} [ p ] \.{=} Tail ( MessageBox [ p ] ) ]}%
+\@x{\@s{82.53} \.{\lor} \.{\land} p \.{<} id}%
+\@y{\@s{0}%
+ If \ensuremath{p \.{<} id} send probe to \ensuremath{neighbour
+}}%
+\@xx{}%
+ \@x{\@s{93.64} \.{\land} SendMessageAndTailMessageBox ( p ,\, Neighbour ( p )
+ ,\, id ,\,\@w{PROBE} )}%
+\@x{\@s{60.31} \.{\lor} \.{\land} msg \.{=}\@w{SELECTED}}%
+\@y{\@s{0}%
+ If the message is \ensuremath{SELECTED
+}}%
+\@xx{}%
+\@x{\@s{71.42} \.{\land} \.{\lor} \.{\land} p \.{\neq} id}%
+\@y{\@s{0}%
+ If \ensuremath{p \.{\neq} id}, then send \ensuremath{SELECTED} to
+ \ensuremath{neighbour
+}}%
+\@xx{}%
+ \@x{\@s{93.64} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Leader \.{=} id ,\, {\bang} [ p ] . Participating \.{=} {\FALSE} ]}%
+ \@x{\@s{93.64} \.{\land} SendMessageAndEmptyMessageBox ( p ,\, Neighbour ( p
+ ) ,\, id ,\,\@w{SELECTED} )}%
+\@x{\@s{82.53} \.{\lor} \.{\land} p \.{=} id}%
+\@y{\@s{0}%
+ if \ensuremath{p \.{=} id} then declare itself the leader
+}%
+\@xx{}%
+ \@x{\@s{93.64} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Leader \.{=} id ,\, {\bang} [ p ] . Participating \.{=} {\FALSE} ]}%
+ \@x{\@s{93.64} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
+ {\bang} [ p ] \.{=} {\langle} {\rangle} ]}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ If the leader is dead, send a \ensuremath{PROBE} message, if the only alive
+ process is the first one,
+}%
+\@xx{}%
+\@x{}%
+\@y{\@s{0}%
+ then make \ensuremath{p} the process, end the election and go into deadlock
+}%
+\@xx{}%
+ \@x{ CheckLeader ( p ) \.{\defeq} \.{\land} State [ p ] . Condition
+ \.{=}\@w{Active}}%
+ \@x{\@s{87.92} \.{\land} State [ State [ p ] . Leader ] . Condition
+ \.{=}\@w{Dead}}%
+\@x{\@s{87.92} \.{\land} State [ p ] . Participating \.{=} {\FALSE}}%
+\@x{\@s{87.92} \.{\land} \.{\lor} \.{\land} MaxAliveID \.{=} 1}%
+ \@x{\@s{110.15} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Leader \.{=} p ,\, {\bang} [ p ] . Participating \.{=} {\FALSE} ]}%
+\@x{\@s{110.15} \.{\land} {\UNCHANGED} MessageBox}%
+\@x{\@s{99.04} \.{\lor} \.{\land} MaxAliveID \.{\neq} 1}%
+ \@x{\@s{110.15} \.{\land} SendMessage ( Neighbour ( p ) ,\, p ,\,\@w{PROBE}
+ )}%
+ \@x{\@s{110.15} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Participating \.{=} {\TRUE} ]}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Makes sure the algorithm runs correctly
+}%
+\@xx{}%
+\@x{ KillLeader \.{\defeq}}%
+\@x{\@s{12.29} \.{\land} State [ MaxAliveID ] . Leader \.{=} MaxAliveID}%
+ \@x{\@s{12.29} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [
+ MaxAliveID ] . Condition \.{=}\@w{Dead} ]}%
+ \@x{\@s{12.29} \.{\land} Cardinality ( \{ p \.{\in} ProcessID \.{:} State [ p
+ ] . Condition \.{=}\@w{Active} \} ) \.{\geq} 2}%
+\@x{\@s{12.29} \.{\land} {\UNCHANGED} MessageBox}%
+\@pvspace{8.0pt}%
+\@x{ Next \.{\defeq} \.{\lor} KillLeader}%
+ \@x{\@s{39.83} \.{\lor} \E\, p \.{\in} 1 \.{\dotdot} MaxAliveID \.{:}
+ HandleMessages ( p ) \.{\lor} CheckLeader ( p )}%
+\@pvspace{8.0pt}%
+ \@x{ Spec\@s{1.46} \.{\defeq} Init \.{\land} {\Box} [ Next ]_{ {\langle}
+ State ,\, MessageBox {\rangle}} \.{\land} {\SF}_{ {\langle} State ,\,
+ MessageBox {\rangle}} ( Next )}%
+\@pvspace{8.0pt}%
+\@x{}\midbar\@xx{}%
+\@x{}%
+\@y{%
+ Invariants
+}%
+\@xx{}%
+\@pvspace{8.0pt}%
+\@x{ TypeOK \.{\defeq} \A\, p \.{\in} ProcessID \.{:}}%
+\@x{\@s{41.35} \.{\land} State [ p ] . ID \.{\in} ProcessID}%
+ \@x{\@s{41.35} \.{\land} State [ p ] . Condition \.{\in} \{\@w{Active}
+ ,\,\@w{Dead} \}}%
+\@x{\@s{41.35} \.{\land} State [ p ] . Leader \.{\in} ProcessID}%
+\@x{\@s{41.35} \.{\land} State [ p ] . Participating \.{\in} {\BOOLEAN}}%
+ \@x{\@s{41.35} \.{\land} MessageBox \.{\in} [ ProcessID \.{\rightarrow} Seq (
+ Message ) ]}%
+\@pvspace{8.0pt}%
+ \@x{ UniqueID \.{\defeq} \A\, p ,\, q \.{\in} ProcessID \.{:} ( State [ p ] .
+ ID \.{=} State [ q ] . ID ) \.{\implies} ( p \.{=} q )}%
+\@pvspace{8.0pt}%
+\@x{}\midbar\@xx{}%
+\@x{}%
+\@y{%
+ Properties
+}%
+\@xx{}%
+\@pvspace{8.0pt}%
+ \@x{ ElectionTerminationImpliesSameLeader \.{\defeq} \A\, p ,\, q \.{\in}
+ ProcessID \.{:}}%
+\@x{\@s{16.4} ( State [ p ] . Condition \.{=}\@w{Active}}%
+\@x{\@s{16.4} \.{\land} State [ q ] . Condition \.{=}\@w{Active}}%
+\@x{\@s{16.4} \.{\land} State [ p ] . Participating \.{=} {\FALSE}}%
+ \@x{\@s{16.4} \.{\land} State [ q ] . Participating\@s{0.25} \.{=} {\FALSE}
+ )}%
+ \@x{\@s{16.4} \.{\implies} ( State [ p ] . Leader \.{=} State [ q ] . Leader
+ )}%
+\@pvspace{8.0pt}%
+\@x{}%
+\@y{\@s{0}%
+ Eventually, the election will end
+}%
+\@xx{}%
+ \@x{ ElectionWillEnd \.{\defeq} \A\, p \.{\in} ProcessID \.{:} State [ p ] .
+ Participating \.{\leadsto} ( {\Diamond} ( State [ p ] . Participating \.{=}
+ {\FALSE} ) )}%
+\@pvspace{8.0pt}%
+\@x{ HighestAliveProcessIsLeader \.{\defeq} \A\, p \.{\in} ProcessID \.{:}}%
+\@x{\@s{16.4} State [ p ] . Participating \.{=} {\FALSE} \.{\implies}}%
+ \@x{\@s{28.69} ( State [ MaxAliveID ] . Condition \.{=}\@w{Active}
+ \.{\implies} State [ p ] . Leader \.{=} MaxAliveID )}%
+\@pvspace{8.0pt}%
+\@x{}\bottombar\@xx{}%
 
 
 \end{document}
