@@ -106,23 +106,17 @@
 
 Today, more than ever before, distributed systems are crucial in computer infrastructure. However, they are also notoriously difficult to implement correctly. Even only a few interacting processes in a distributed system can lead to a tremendous amount of states. Catching each bug and edge case in the many possible states can take an enormous amount of time, and be exceedingly challenging.
 
-Distributed leader election is a distributed algorithm which requires that all processes in a distributed system agree on one specific process as their leader. This is crucial for many modern systems as distributed algorithms are typically not completely symmetrical, and therefore some process has to take the lead in initiating the algorithm. Furthermore, it saves resources by making sure that no process other than the leader replicates the algorithm initiation.
+Leader election is a distributed algorithm which requires that all processes in a distributed system agree on one specific process as their leader. This is crucial for many modern systems as distributed algorithms are typically not completely symmetrical, and therefore some process has to take the lead in initiating the algorithm, which a leader election algorithm can do. Leader election is also used because it saves resources by making sure that no process other than the leader replicates the algorithm initiation.
 
-Because of the challenge of using conventional tools to verify that a distributed algorithm works as intended in a distributed system, we use techniques from formal verification methods.
+It is a challenge to verify that distributed algorithms work as intended in a distributed system using conventional tools today. Therefore, we use techniques from formal verification methods, because they help us test distributed algorithms in a way that no conventional tool can.
 
 We seek to verify the correctness of two distributed leader election algorithms: the Bully Algorithm and the Ring Algorithm\footnote{The Ring Algorithm is a familiar name for the Lelang, Chang and Roberts algorithm (also known as LCR). We will continue to use the name ``Ring Algorithm''.}.
 
+We do this using techniques from formal methods to check if there are any bugs, concurrency issues and security issues in the algorithm. Throughout this project the TLA$^{+}$ (Temporal Logic of Actions Plus) verification suite is used to model the Ring and Bully Algorithm
 
-We do this using techniques from formal methods to check if there are any bugs, concurrency issues, security issues in the algorithm. Throughout this project the TLA$^{+}$ (Temporal Logic of Actions Plus) verification suite is used, to model the Ring and Bully Algorithm
+In the TLA$^{+}$ verification suite, the TLC model is included. The model checker verifies the algorithm by going through each possible state, and making sure that it produces satisfiable behavior, thus verifying if an algorithm works even in the cases that are close to impossible using conventional tools.
 
-
-The goal of this project is to model the algorithms in the TLA$^{+}$ specification language, and verify them using the TLC model checker included in the verification suite. The TLC model verifies the algorithm by going through each possible state, and making sure that it produces satisfiable behavior.
-
-
-
-
-
-
+Thus, the goal of this project is to have modelled both the Bully Algorithm and the Ring Algorithm in the TLA$^{+}$ specification language, and have tested them using the TLC model checker.
 
 \chapter{Overview}
 
