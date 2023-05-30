@@ -745,7 +745,18 @@ The setup (See Figure \ref{ringsetup}) for the Ring Algorithm is almost identica
 
   \tlatex
 \@x{}\moduleLeftDash\@xx{Neighbour}\moduleRightDash\@xx{}%
-\@x{ Neighbour ( p ) \.{\defeq} ( p \.{\%} MaxAliveID ) \.{+} 1}%
+\@x{ Neighbour ( p ) \.{\defeq}}%
+ \@x{\@s{16.4} \.{\LET} AliveProcesses \.{\defeq} \{ q \.{\in} ProcessID \.{:}
+ State [ q ] . Condition \.{=}\@w{Active} \}}%
+\@x{\@s{16.4} \.{\IN}}%
+ \@x{\@s{16.4} {\IF} p \.{=} MaxAliveID \.{\THEN} {\CHOOSE} q \.{\in}
+ AliveProcesses \.{:} {\TRUE} \.{\ELSE}}%
+\@x{\@s{51.73} {\CHOOSE} neighbour \.{\in} AliveProcesses \.{:}}%
+\@x{\@s{94.51} \.{\land} p \.{<} neighbour}%
+ \@x{\@s{94.51} \.{\land} \A\, q \.{\in} AliveProcesses \.{:} q \.{\leq} p
+ \.{\lor} neighbour \.{\leq} q}%
+
+
 \@x{}\bottombar\@xx{}%
 
   \caption{Neighbour function}
