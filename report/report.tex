@@ -80,7 +80,10 @@
        \includegraphics[scale=0.3]{sdu.png}
 
        \vspace*{1cm}
-       \textbf{\Large Formal Verification of Distributed Leader Election Algorithms with Model Checking}\\
+       \textbf{\Large Formal verification of distributed leader election algorithms with model checking
+       }\\
+
+
        \vspace{0.4cm}
        June 1, 2023
 
@@ -118,33 +121,34 @@
 \chapter{Introduction}
 
 
-Today, more than ever before, distributed systems are crucial in computer infrastructure. However, they are also notoriously difficult to implement correctly. Even only a few interacting processes in a distributed system can lead to a tremendous amount of states. Catching each bug and edge case in the many possible states can take an enormous amount of time, and be exceedingly challenging.
+Today, more than ever before, distributed systems have a crucial role in computer infrastructure. However, they are also notoriously difficult to implement correctly. Even with only a few interacting processes in a distributed system, it can lead to a tremendous amount of states. Catching each bug and edge case in the many possible states can take an enormous amount of time, and be exceedingly challenging.
 
-Leader election is a distributed algorithm which requires that all processes in a distributed system agree on one specific process as their leader. This is crucial for many modern systems as distributed algorithms are typically not completely symmetrical, and therefore some process has to take the lead in initiating the algorithm, which a leader election algorithm can do. Leader election is also used because it saves resources by making sure that no process other than the leader replicates the algorithm initiation \cite{kshemkalyani2011distributed}.
+Distributed leader election is a distributed algorithm which requires that all processes in a distributed system agree on one specific process as their leader. This is crucial for many modern systems as distributed algorithms are typically not completely symmetrical, and therefore some process has to take the lead in initiating the algorithm. Leader election can find a leader, to become this process which initiates the algorithm \cite{kshemkalyani2011distributed}.
 
 It is a challenge to verify that distributed algorithms work as intended in a distributed system using conventional tools today. Therefore, we use techniques from formal verification methods, because they help us test distributed algorithms in a way that no conventional tool can.
 
 We seek to verify the correctness of two distributed leader election algorithms: the Bully Algorithm and the Ring Algorithm\footnote{The Ring Algorithm is a familiar name for the Lelang, Chang and Roberts algorithm (also known as LCR). We will continue to use the name ``Ring Algorithm''.}.
 
-We do this using techniques from formal methods to check if there are any bugs, concurrency issues and security issues in the algorithm. Throughout this project the TLA$^{+}$ (Temporal Logic of Actions Plus) verification suite is used to model the Ring and Bully Algorithm.
+We do this using techniques from formal methods to check if there are any bugs, concurrency issues and security issues in the algorithm. Throughout this project the TLA$^{+}$ (Temporal Logic of Actions Plus) verification suite is used to model and verify the Ring and Bully Algorithm.
 
-In the TLA$^{+}$ verification suite, the TLC model is included. The model checker verifies the algorithm by going through each possible state, and making sure that it produces satisfiable behavior, thus verifying if an algorithm works even in the cases that are close to impossible using conventional tools \cite{tla+}.
+In the TLA$^{+}$ verification suite, the TLC model is included. The model checker verifies the correctness of the algorithm by going through each possible state, and making sure that it produces satisfiable behavior, thus verifying if an algorithm works even in the cases that are hard to find using conventional tools \cite{10.1007/3-540-48153-2_6}.
 
-Thus, the goal of this project is to have modeled both the Bully Algorithm and the Ring Algorithm in the TLA$^{+}$ specification language, and have tested them using the TLC model checker.
+The goal of this project is to have modeled both the Bully Algorithm and the Ring Algorithm in the TLA$^{+}$ specification language, and have tested them using the TLC model checker to verify if they are correct.
 
 \chapter{Overview}
 
 \section{Leader Election}
 
-In several algorithms for distributed systems, a process may posses the role of the \textit{leader}. Usually a leader may be required because distributed algorithms typically are not completely symmetrical. Thus, the leader can take the lead in initiating the algorithm. This also saves resources in the system, as it ensures that only the leader will take the initiative in an algorithm, and that other processes won't do it as well.
+In several algorithms for distributed systems, a process may posses the role of the \textit{leader}. Usually a leader may be required because distributed algorithms typically are not completely symmetrical. Thus, the leader can take the lead in initiating the algorithm.
 
-The aim of an algorithm for the Leader Election problem is to elect a leader from a set of processes in a way that all processes can agree on the same leader. It is crucial that all processes agree on the same leader, as if one process has the wrong leader, it can lead to many failures in the system.
+The aim of an algorithm for the Leader Election problem is to elect a leader from a set of processes in a way that all processes can agree on the same leader. It is crucial that all processes agree on the same leader, as if one process has the wrong leader, it can lead to many issues, such as failures in the system.
 
 %This \textit{report?} will search to implement two leader election algorithms: The \textit{Bully Algorithm} and the \textit{Ring Algorithm}\footnote{Also known as the Lelang, Chang and Roberts (LCR) algorithm, but commonly referred to as the Ring algorithm, as will be done in this \texit{report?}}
 %This should probably be discussed in the introduction.
 
 This project focuses on the Bully Algorithm and the Ring Algorithm. The Ring Algorithm works on a complete graph, with an undirected ring superimposed. The Bully Algorithm works on a complete undirected graph.
-
+\\\\
+\noindent
 For both the Bully and Ring Algorithm we assume that:
 \begin{itemize}
   \item The network is reliable. Messages do not get lost.
@@ -179,8 +183,9 @@ When a process $p$ recovers from failure, or the failure detector indicates that
 
 \section{Ring Algorithm}
 
-The Ring Algorithm, like the Bully Algorithm, solves the problem of leader election. However, unlike the Bully Algorithm, the Ring Algorithm assumes a superimposed undirected ring. This means that we assume the processes to be in a ring, and model the implementation from this assumption.
-
+Unlike the Bully Algorithm, the Ring Algorithm assumes a superimposed undirected ring. This means that we assume the processes to be in a ring, and model the implementation from this assumption.
+\\\\
+\noindent
 In the Ring Algorithm, there exists two different types of messages:
 \begin{itemize}
   \item \textit{probe(id)}: sent to search for the leader.
@@ -221,7 +226,7 @@ In this algorithm, like in the Bully Algorithm, we assume that the leader will b
 \chapter{Bully Algorithm}
 
 \section{Converting to TLA+}
-Since we have based ourself on an instruction set rather than pseudocode for what process $p$ should do, it has been more a process of modelling the algorithm correctly, rather than converting it from pseudocode.
+Since we have based ourself on an instruction set rather than pseudocode for what process $p$ should do, it has been more of a process of modelling the algorithm correctly, rather than converting it from pseudocode.
 
 The second point in the algorithm described earlier states that, if process $p$ receives no \textit{alive} message after sending an Election message, it then broadcasts an \textit{victory} message to all other processes. Since TLA$^{+}$ does not allow for waiting a specified amount of time, and we assume a \textit{fail-stop} model, instead of waiting to see, it immediately checks if process P is the process with the highest ID alive, and broadcasts a \textit{victory} message if this is the case. We allow ourself this because the \textit{fail-stop} assumes that all processes will know the failure of other processes, but it is not specified how. Therefore, we can assume that the process will know that it is the highest process. This is also done in the beginning of the algorithm, when a process checks if a leader is dead. However, the rest of the implementation is as true to the set of instructions as possible.
 
@@ -264,7 +269,7 @@ Before modeling the behavior of the specification, we set up the constants, vari
 The algorithm assumes a complete undirected graph. We model this by creating a \textbf{State} variable, which contains a record of all \textit{processes} and their fields. We define the \textbf{State} variable to be a sequence of records, each of which hold the following metadata in its fields (Figure \ref{bullysetup}):
 \begin{itemize}
     \item \textit{ID}: The process has a unique ID. $ID \in ProcessID$, where $ProcessID$ is the total number of processes, defined as a range from 1 to the natural number N.
-    \item \textit{Condition}: A process is either dead or alive (called \textit{active}). Due to the assumptions of the algorithm we assume that each process knows when another process is dead. Condition $\in$ \{{\sans"Dead", "Active"}\}
+    \item \textit{Condition}: A process is either dead or alive (called \textit{active}). Condition $\in$ \{{\sans"Dead", "Active"}\}
     \item \textit{Leader}: The process should know who its leader is. The leader may be the process itself. $Leader \in ProcessID$
     \item \textit{Participating}: The process is either participating in the election or not. $Participating \in$ {\small \textsc{Boolean}}
 \end{itemize}
@@ -325,7 +330,7 @@ In the sender functions (Figure \ref{bullysendingmessages}) you will notice two 
 
 As discussed earlier, there are three different messages in the bully algorithm: \textit{alive}, \textit{victory}, and \textit{election}.
 
-The \textit{alive} message is only sent in a case where a process receives an \textit{election} message from a process with a lower id. Thus, no additional work is needed other than process $q$ should receive an \textit{alive} message from process $p$. This job is done by the \textit{SendAliveAndTail} function. Since it as an ``AndTail'' function it also removes the newest message by setting the message box of $p$ to be the tail of the message box.
+The \textit{alive} message is only sent in a case where a process receives an \textit{election} message from a process with a lower id. Thus, no additional work is needed other than process $q$ should receive an \textit{alive} message from process $p$. This job is done by the \textit{SendAliveAndTail} function. Since it is an ``AndTail'' function it also removes the newest message by setting the message box of $p$ to be the tail of the message box.
 
 The \textit{SendVictory} function is similar, only it sends the \textit{victory} message to all processes except the sender. We assume a fail-stop model, meaning that the other processes learn when a process dies, allowing us to send only to the alive processes. This function also has a ``AndTail'' variant, which is identical except it tails $p$'s message box.
 
@@ -418,11 +423,11 @@ Points 3, 4, and 5 from the pseudocode describe what to do when receiving messag
   \item If P receives a victory message, it treats the sender as the leader.
 \end{enumerate}
 
-The function \textit{ReceiveAlive} addresses point 3. It checks if the message is from a higher id than itself, and if so, it modifies its participation status to be \textsc{False}.
+The function \textit{ReceiveAlive} (Figure \ref{messagehandlers}) addresses point 3. It checks if the message is from a higher id than itself, and if so, it modifies its participation status to be \textsc{False}.
 
 The function \textit{ReceiveElection} addresses point 4. However, you may notice that it does not correctly follow point 4. Point 4 explicitly states that \textbf{``...if it has not already started an election, it starts the elction process at the beginning, by sending an Election message to higher-numbered processes''}. Instead of doing this, it only sends an alive message, and, if its own participation status is \textsc{False}, it sets it to be \textsc{True} instead. This change is done because it will only lead to a number of irrelevant \textit{election} messages. Furthermore, we have deviated from point 4 in the sense that we check if the process has the highest ID alive, and if so, it declares victory. This is done because we assume a fail-stop model.
 
-The \textit{ReceiveVictory} function (Figure \ref{messagehandlers}) addresses point 5 by setting the leader to the sender of the \textit{victory} message.
+The \textit{ReceiveVictory} function addresses point 5 by setting the leader to the sender of the \textit{victory} message.
 
 
 \section{Delegating Functions with HandleMessages}
@@ -496,13 +501,13 @@ The \textit{ReceiveVictory} function (Figure \ref{messagehandlers}) addresses po
 \label{handlemessages}
 \end{figure}
 
-In the \textit{Next} predicate of the specification, one of the actions a process can take is to check its messages. This is done via the \textit{HandleMessages} function. If process $p$ has any messages in their inbox, one of 4 things can happen, depending on the type of message or the condition of the sender.
+In the \textit{Next} state relation of the specification, one of the actions a process can take is to check its messages. This is done via the \textit{HandleMessages} function. If process $p$ has any messages in their inbox, one of 4 things can happen, depending on the type of message or the condition of the sender.
 
 \begin{enumerate}[wide, labelwidth=!, labelindent=0pt]
-  \item If the sender is dead, we ignore the message and delete it from the inbox of process $p$.
+  \item If the sender is dead, we ignore the message and remove it from the inbox of process $p$.
   \item If the content of the message is \textit{victory}, we delegate work to the \textit{ReceiveVictory} function and remove all messages from process $p$ because we do not care about other message at this point.
   \item If the content of the message is \textit{election}, we delegate the rest of the work to the \textit{ReceiveElection} function.
-  \item If the content of the message is \textit{alive}, we delegate work to the \textit{ReceiveAlive} function and delete the message from the inbox of process $p$.
+  \item If the content of the message is \textit{alive}, we delegate work to the \textit{ReceiveAlive} function and remove the message from the inbox of process $p$.
 \end{enumerate}
 
 \section{Checking the leader condition}
@@ -565,9 +570,9 @@ The function only runs if the process checking is active, and the leader is dead
 The Next state relation (Figure \ref{nextpredkillleader}) chooses what should happen in the next state.
 For this specification there are two options: Either, the leader is killed, or a process handles its messages or checks its leaders status.
 
-In case the choice is made to kill the leader, we make sure that the leader sees itself as the leader, and if they do, we change its condition in the next state relation to be dead and its participation status to be \textsc{False}, effectively killing it. This is only done if there are 2 or more processes alive.
+In case the choice is made to kill the leader, we make sure that the leader sees itself as the leader, and if they do, we change its condition in the next state to be dead and its participation status to be \textsc{False}, effectively killing it. This is only done if there are 2 or more processes alive, as there is no reason to initiate a leader election when there is only one process.
 
-In case the decision to kill the leader is not chosen, a process is chosen to either check its leader or handle its messages.
+In case the decision to kill the leader is not chosen, some process is chosen. The process either checks its leader or handles its messages.
 
 
 \section{Invariants and properties}
@@ -655,7 +660,7 @@ In case the decision to kill the leader is not chosen, a process is chosen to ei
 
 \textbf{Invariants}\\
 \noindent
-In TLA$^{+}$, an \textit{invariant} is a statement that must be true on every state of the program. One common type of invariant is the \textit{TypeOK} invariant (Figure \ref{bullyinvariantsproperties}). \textit{TypeOK} makes sure that the types never go out of a specified domain or change to an unwanted value. In the case of this specification this is true for the \textit{State} and \textit{MessageBox} variables. For the \textit{State} variable, it will hold true that:
+In TLA$^{+}$, an \textit{invariant} is a statement that must be true on every state of the program. \cite{Wayne} One common type of invariant is the \textit{TypeOK} invariant (Figure \ref{bullyinvariantsproperties}). \textit{TypeOK} makes sure that the types never go out of a specified domain or change to an unwanted value. In the case of this specification this is true for the \textit{State} and \textit{MessageBox} variables. For the \textit{State} variable, it will hold true that:
 \begin{itemize}
   \item A process' \textit{id} is a part of the \textit{ProcessID}
   \item A process' condition is either \textit{Active} or \textit{Dead}
@@ -669,11 +674,11 @@ In this specification, we also have an invariant called \textit{UniqueID} which 
 \noindent
 \textbf{Properties}\\
 \noindent
-There are two kinds of temporal properties: safety properties, and liveness properties. Safety properties make sure that the system doesn't do bad things, and liveness makes sure our system always does a good thing.
+There are two kinds of temporal properties: safety properties, and liveness properties. Safety properties make sure that the system doesn't do bad things, and liveness makes sure our system always does a good thing.\cite{Wayne}
 
 We have three properties: two safety properties and one liveness property. The safety properties are \textit{ElectionTerminationImpliesSameLeader}, and \textit{HighestAliveProcessIsLeader}. \textit{ElectionTerminationImpliesSameLeader} ensures that when two processes that have been in an election eventually get out of the election, they will have the same leader. \textit{HighestAliveProcessIsLeader} ensures that if a process is not participating in an election, its leader is the process with the highest id alive.
 
-The liveness property, \textit{ElectionWillEnd} ensures that an election will eventually end.
+The liveness property, \textit{ElectionWillEnd} ensures that an election will eventually end, such that it does not just run forever.
 
 \section{Temporal Formula}
 
@@ -693,14 +698,14 @@ The liveness property, \textit{ElectionWillEnd} ensures that an election will ev
 \end{figure}
 
 
-To run the specification with the model checker, the temporal formula in Figure \ref{bullyspec} is used. The reason a temporal formula is used rather than just specifying the Initial predicate and Next-state relation is to use \textit{strong fairness}. Without strong fairness, the model checker might just decide to stop the entire system. That is an intended feature, but it is not what we want. Strong fairness says that if an action is always enabled, it eventually happens.
+To run the specification with the model checker, the temporal formula in Figure \ref{bullyspec} is used. The reason a temporal formula is used rather than just specifying the initial predicate and next-state relation is to use \textit{strong fairness}. Without strong fairness, the model checker might just decide to stop the entire system. That is an intended feature, but it is not what we want. Strong fairness ensures that if an action is always enabled, it eventually happens.\cite{Wayne_2020}
 
 
 \chapter{Ring Algorithm}
 
 
 \section{Similarities to Bully Algorithm}
-The Ring Algorithm and the Bully Algorithm are both similar in many ways. Since both algorithms are algorithms on graphs, we can reuse a lot of the setup. Furthermore, the Ring Algorithms superimposed overlay is an undirected ring. We will not need to model it is a ring, even though it is a ring. Instead, we assume it to be a ring, and write the specification as if it was a ring.
+The Ring Algorithm and the Bully Algorithm are both similar in many ways. Since both algorithms are algorithms on graphs, we can reuse a lot of the setup. The Ring Algorithms superimposed overlay is an undirected ring. We will not need to model it is a ring, even though it is a ring. Instead, we assume it to be a ring, and write the specification as if it was a ring.
 
 
 \section{Setup}
@@ -800,14 +805,14 @@ The setup (Figure \ref{ringsetup}) for the Ring Algorithm is almost identical to
 \noindent
 \textbf{Neighbour}\\
 \noindent
-In a ring topology, each process has a left-side neighbour and a right-side neighbour. For the Ring Algorithm we only care about the right-side neighbour. Thus, the \textit{Neighbour} function (Figure \ref{ringneighbour} returns the left-side neighbour. It does this first by checking if the process asking for its neighbour is the process with the highest id alive, and if so it returns the lowest id alive. Otherwise, it uses \textsc{Choose} to choose the process whose id is higher than p, but lower than every other process whose id is higher than p.
+In a ring topology, each process has a left-side neighbour and a right-side neighbour. For the Ring Algorithm we only care about the right-side neighbour. Thus, the \textit{Neighbour} function (Figure \ref{ringneighbour}) returns the left-side neighbour. It does this first by checking if the process asking for its neighbour is the process with the highest id alive, and if so it returns the lowest id alive. Otherwise, it uses \textsc{Choose} to choose the process whose id is higher than p, but lower than every other process whose id is higher than p, i.e. the neighbour.
 \\\\
 \noindent
 \textbf{Sending Messages}\\
 \noindent
 We deviate a lot from the Bully algorithm in how messages are sent. Instead of having functions for specific messages, we have two functions \textit{SendMessage} and \textit{SendMessageAndTailMessageBox} (Figure \ref{ringsendingmessages}). In the Bully Algorithm, a lot had to be done when sending each message. In the Ring Algorithm, messages are only sent to neighbours, thus requiring less work choosing who to send to. In the Bully Algorithm this work was done in the sender functions, but this work is not needed in the Ring Algorithm.
 
-The \textit{SendMessage} function updates the MessageBox of a process with a Message. The \textit{SendMessageAndTailMessageBox} is similar, except it also removes the first message in the MessageBox of $p$. This is done, because the \textit{HandleMessages} function requries both sending messages and deleting in the same state. However, in TLA$^{+}$ you cannot update a variable twice in the same state, thus requiring a function like \textit{SendMessageAndTailMessageBox} to update both message boxes at the same time. \textit{SendMessageAndEmptyMessageBox} is similar to \textit{SendMessageAndTailMessageBox}, but instead of deleting just the first message, it deletes all messages.
+The \textit{SendMessage} function updates the MessageBox of a process with a Message. The \textit{SendMessageAndTailMessageBox} is similar, except it also removes the first message in the MessageBox of $p$. This is done because the \textit{HandleMessages} function requries both sending messages and deleting in the same state. However, in TLA$^{+}$ you cannot update a variable twice in the same state, thus requiring a function like \textit{SendMessageAndTailMessageBox} to update both message boxes at the same time. \textit{SendMessageAndEmptyMessageBox} is similar to \textit{SendMessageAndTailMessageBox}, but instead of deleting just the first message, it deletes all messages.
 
 
 
@@ -922,7 +927,7 @@ In case the message received is \textit{probe}, we check first if process $p$ is
 
 Afterwards, we compare $p$ with the \textit{id} from the message.
 If $p = id$, then the probe has circled around all processes, and we send the \textit{selected} message to the neighbour. The message box of $p$ is then emptied. We empty the message box to ensure that there aren't any excess messages that will harm the election.\\
-If $p > id$, we deviate from the original pseudocode. The original pseudocode states that: ``if p > id, discard the probe.'' However, this leads to cases with infinite loops of \textit{probe} messages. Thus, instead what we do is, if $p > id$ and $p$ is not participating in the election, we send a new \textit{probe} message with $p$ as the id, so that it can become the leader. If $p$ however is participating, we just discard the message.\\
+If $p > id$, we deviate from the original pseudocode. The original pseudocode states that: ``if p $>$ id, discard the probe.'' However, this leads to cases with infinite loops of \textit{probe} messages. Thus, instead what we do is, if $p > id$ and $p$ is not participating in the election, we send a new \textit{probe} message with $p$ as the id, so that it can become the leader. If $p$ however is participating, we just discard the message.\\
 If $p < id$ we send the probe to the right  neighbour, and delete the message.
 \\\\
 \noindent
@@ -1071,7 +1076,7 @@ As you can see in table \ref{numstatesmodelcheckerringalgorithm}, the number of 
 \noindent
 \textbf{Bully Algorithm}\\
 \noindent
-As you can see in table \ref{numstatesmodelcheckerbullyalgorithm}, the number of states, like the Ring Algorithm rise exponentially, although much faster here. The reason for only going to $n = 5$, rather than $n = 10$ as with the Ring Algorithm is the amount of time it takes for the model checker to be done. With $n = 5$ in the Bully Algorithm it took 8 minutes and 23 seconds, to contrast, it only took 2 seconds with $n = 4$. I do not believe that this is an error in the algorithm that only kicks in when $n = 4$, but I do believe that there are some unnecessary states that are being checked, hence the rapid acceleration of states compared to the Ring Algorithm. Both do grow somewhat exponentially, but the Bully Algorithm grows much faster than the Ring Algorithm. I believe that the algorithm runs as it should, and it gets to the correct termination state, but there may be some redundant messages, however I have not discovered the ``issue'', if there is one.
+As you can see in table \ref{numstatesmodelcheckerbullyalgorithm}, the number of states, like the Ring Algorithm rise exponentially, although much faster here. The reason for only going to $n = 5$, rather than $n = 10$ as with the Ring Algorithm is the amount of time it takes for the model checker to be done. With $n = 5$ in the Bully Algorithm it took 8 minutes and 23 seconds, to contrast, it only took 2 seconds with $n = 4$.
 
 
 \begin{table}[]
@@ -1114,19 +1119,30 @@ The only shortcoming is that only the leader gets killed, and not any of the oth
 
 \section{Pseudocode to TLA$^{+}$}
 
-Instead of converting from pseudocode to TLA$^{+}$, I used a set of instructions for both algorithms. Both of these specified the behavior for when a process $p$ wakes up or detects a leader to be dead. As we have assumed that processes that die are removed, there has been no need to model the waking up of a process, thus leaving us only with an option to create a function like \textit{CheckLeader}. This is also the reason that the implementation of the Ring Algorithm is so different when the process id is higher than the id in the message. If it was only when the process checked when the leader died, a lot of messages would float around that were of no use.
+Instead of converting from whae we tratidionally think of as pseudocode to TLA$^{+}$, I used a set of instructions for both algorithms. Both of these specified the behavior for when a process $p$ wakes up or detects a leader to be dead. As we have assumed that processes that die are removed, there has been no need to model the waking up of a process, thus leaving us only with an option to create a function like \textit{CheckLeader}. This is also the reason that the implementation of the Ring Algorithm is so different when the process id is higher than the id in the message. If it was only when the process checked when the leader died, a lot of messages would float around that were of no use.
 
-The approach of using a set of instructions like this, rather than a specific pseudo code has left a lot of ambiguity and things to be interpreted. While this may not seem the case at first glance, a few things aren't specified. Such as in the Ring Algorithm, in the pseudocode it is not specified when each process should toggle their \textit{participation} status back to \textsc{False}. Neither is it clear to see what the purpose of the \textit{participation} variable is in general. The instruction set does not say at any point that something isn't allowed if a process isn't participating. This along with smaller things both from the Ring Algorithm and the Bully Algorithm has left a lot of interpretation work to do. Although both algorithms work properly, there may be some unseen mistakes that, although the algorithm still works, do hinder it in some way. This might also be the reason for the huge amount of states in the Bully Algorithm. I have changed the algorithm sufficiently to comply with what seemed sensible, but this change might have come from misinterpretation in the algorithm. Nevertheless, both algorithms are successful.
+The approach of using a set of instructions like this, rather than a specific pseudo code has left a lot of ambiguity and things to be interpreted. While this may not seem the case at first glance, a few things aren't specified. Such as in the Ring Algorithm, in the pseudocode it is not specified when each process should toggle their \textit{participation} status back to \textsc{False}. Neither is it clear to see what the purpose of the \textit{participation} variable is in general. The instruction set does not say at any point that something isn't allowed if a process isn't participating. This along with smaller things both from the Ring Algorithm and the Bully Algorithm has left a lot of interpretation work to do. There may be some unseen mistakes that do hinder the algorithm in some way.
 
+
+
+\section{Potential Future Changes}
+
+In the Bully Algorithm, we get an enormous amount of states found compared to the Ring Algorithm. A potential reason for this is the way the messages are checked. One of the options when it checks messages it to throw out the message if the sender is dead, rather than just ignoring it. If we instead just checked if the process is dead in each case of messages, it would likely reduce the amount of states drastically. However, there might be some potential issues here, such as deadlocked states where nothing happens because a message will be stuck. But a potential ``fix'' to this, might result in getting a more realistic number of states. Intuitively, the Ring Algorithm does not need to check if a message sender is dead as it comes from the neighbour, and will count no matter what.
+
+The other reason might be something that I have not yet found, but has been a product of the interpretation work. I might have done too much interpretation, and really changed something did I did not think would change anything, or I did not realize to be a change.
 
 \chapter{Conclusion}
 
+
 In this project we have implemented the Bully Algorithm and the Ring Algorithm for leader election. The algorithms have been modeled in the  TLA$^{+}$ specification language and thoroughly checked with the TLC model checker.
 
-Throughout the implementation of the algorithms, the pseudocode has been followed, but also modified to work correctly with TLA$^{+}$ and our assumption of the \textit{fail-stop} model. As the pseudocode format was a list of instructions rather than traditional pseudocode for both algorithms, some interperation has been done on both algorithms, which may have caused minor problems, such as an excess of states in the Bully Algorithm. Nevertheless, both of the algorithm have been showed with the TLC model checker to be verified correct.
+Throughout the implementation of the algorithms, the pseudocode has been followed, but also modified to work correctly with TLA$^{+}$ and our assumption of the \textit{fail-stop} model. As the pseudocode format was a list of instructions rather than traditional pseudocode for both algorithms, some interperation has been done on both algorithms, which may have caused minor problems, such as an excess of states in the Bully Algorithm.
 
 We have assumed a \textit{fail-stop} model, the network to be reliable, and that no nodes can come back to life. This means that any other cases have not been considered such as messages getting lost, processes not learning of other processes deaths, or nodes becoming alive again after being dead.
 
+Both the Ring Algorithm and the Bully Algorithm have been proven to be verifiably correct with the TLC model checker. The model checker for the Bully Algorithm may have found an unreasonable amount of states, but this doesn't affect the correctness of the algorithm. I would have liked to have had more time to find the issue of the number states found, but ultimately the goal of the project has been reached, and I am satisfied with the work done.
+
+\bibliographystyle{abbrv}
 \bibliography{bibliography}
 
 \appendix
