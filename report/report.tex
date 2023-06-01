@@ -236,8 +236,7 @@ Furthermore, I have made a modification to point 4. However, as this is not done
 \begin{figure}
 \tlatex
 \@x{}\moduleLeftDash\@xx{Setup}\moduleRightDash\@xx{}%
-\@pvspace{8.0pt}%
-\@x{ {\EXTENDS} Naturals ,\, FiniteSets ,\, Sequences}%
+\@x{ {\EXTENDS} Naturals ,\, FiniteSets ,\, Sequences ,\, TLC}%
 \@pvspace{8.0pt}%
 \@x{ {\CONSTANT} N}%
 \@pvspace{8.0pt}%
@@ -406,6 +405,7 @@ Similar to the \textit{victory} message, the \textit{election} message is sent t
 }%
 \@xx{}%
 
+
 \fl{}\bottombar\cl{}
 
 \caption{Message Handlers}
@@ -435,6 +435,7 @@ The \textit{ReceiveVictory} function addresses point 5 by setting the leader to 
 \tlatex
 
 \@x{}\moduleLeftDash\@xx{Delegate Messages}\moduleRightDash\@xx{}%
+
 \@xx{}%
 \@x{ HandleMessages ( p ) \.{\defeq} \.{\LET}}%
 \@x{\@s{93.62} sender \.{\defeq} Head ( MessageBox [ p ] ) [ 1 ]}%
@@ -447,25 +448,17 @@ The \textit{ReceiveVictory} function addresses point 5 by setting the leader to 
  Message box shouldn\mbox{'}t be empty
 }%
 \@xx{}%
- \@x{\@s{97.72} \.{\land} \.{\lor} \.{\land} State [ sender ] . Condition
- \.{=}\@w{Dead}}%
- \@x{\@s{119.95} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
- {\bang} [ p ] \.{=} Tail ( MessageBox [ p ] ) ]}%
-\@y{\@s{0}%
- Remove first message
-}%
-\@xx{}%
-\@x{\@s{119.95} \.{\land} {\UNCHANGED} State}%
-\@x{\@s{108.84} \.{\lor} \.{\land} msg \.{=}\@w{VICTORY}}%
+\@x{\@s{97.72} \.{\land} \.{\lor} \.{\land} msg \.{=}\@w{VICTORY}}%
 \@y{\@s{0}%
  If the message is \ensuremath{VICTORY
 }}%
 \@xx{}%
+\@x{\@s{119.95} \.{\land} State [ sender ] . Condition \.{=}\@w{Active}}%
 \@x{\@s{119.95} \.{\land} ReceiveVictory ( p ,\, sender )}%
  \@x{\@s{119.95} \.{\land} MessageBox \.{'} \.{=} [ MessageBox {\EXCEPT}
  {\bang} [ p ] \.{=} {\langle} {\rangle} ]}%
 \@y{\@s{0}%
- Remove all messages
+ Remove all messages, so that the election does not run forever.
 }%
 \@xx{}%
 \@x{\@s{108.84} \.{\lor} \.{\land} msg \.{=}\@w{ELECTION}}%
@@ -473,6 +466,7 @@ The \textit{ReceiveVictory} function addresses point 5 by setting the leader to 
  If the message is \ensuremath{ELECTION
 }}%
 \@xx{}%
+\@x{\@s{119.95} \.{\land} State [ sender ] . Condition \.{=}\@w{Active}}%
 \@x{\@s{119.95} \.{\land} ReceiveElection ( p ,\, sender )}%
 \@y{\@s{0}%
  Tail is done incide \ensuremath{ReceiveElection
@@ -483,6 +477,7 @@ The \textit{ReceiveVictory} function addresses point 5 by setting the leader to 
  If the message is \ensuremath{ALIVE
 }}%
 \@xx{}%
+\@x{\@s{119.95} \.{\land} State [ sender ] . Condition \.{=}\@w{Active}}%
 \@x{\@s{119.95} \.{\land} ReceiveAlive ( p ,\, sender )}%
 \@y{\@s{0}%
  Handle in \ensuremath{ReceiveAlive
@@ -494,6 +489,7 @@ The \textit{ReceiveVictory} function addresses point 5 by setting the leader to 
  Remove first message
 }%
 \@xx{}%
+
 
 \fl{}\bottombar\cl{}
 
@@ -514,6 +510,8 @@ In the \textit{Next} state relation of the specification, one of the actions a p
 
 \begin{figure}
 \tlatex
+
+\@x{}\moduleLeftDash\@xx{Check Leader}\moduleRightDash\@xx{}%
 
 \@xx{}%
  \@x{ CheckLeader ( p ) \.{\defeq}\@s{8.2} \.{\land} State [ p ] . Condition
@@ -580,6 +578,7 @@ In case the decision to kill the leader is not chosen, some process is chosen to
 \begin{figure}
   \tlatex
 \@x{}\moduleLeftDash\@xx{Invariants and Properties}\moduleRightDash\@xx{}%
+
 \@x{}%
 \@y{\@s{0}%
  Invariants
@@ -616,7 +615,6 @@ In case the decision to kill the leader is not chosen, some process is chosen to
 \@xx{}%
  \@x{ Participating \.{\defeq} \A\, p \.{\in} ProcessID \.{:} State [ p ] .
  Participating \.{=} {\TRUE} \.{\implies} State [ p ] . Leader \.{\neq} p}%
-\@pvspace{8.0pt}%
 \@x{}\midbar\@xx{}%
 \@x{}%
 \@y{\@s{0}%
@@ -649,9 +647,9 @@ In case the decision to kill the leader is not chosen, some process is chosen to
 }%
 \@xx{}%
  \@x{ ElectionWillEnd \.{\defeq} \A\, p \.{\in} ProcessID \.{:} State [ p ] .
- Participating \.{\leadsto} ( {\Diamond} ( State [ p ] . Participating \.{=}
- {\FALSE} ) )}%
-\@pvspace{16.0pt}%
+ Participating \.{\leadsto} State [ p ] . Participating \.{=} {\FALSE}}%
+
+
 \@x{}\bottombar\@xx{}%
 
   \caption{Invariants and Properties in the Bully Algorithm}
@@ -825,6 +823,7 @@ The \textit{SendMessage} function updates the MessageBox of a process with a Mes
 
 \@x{}\moduleLeftDash\@xx{HandleMessages}\moduleRightDash\@xx{}%
 
+\@xx{}%
 \@x{ HandleMessages ( p ) \.{\defeq} \.{\LET}}%
 \@x{\@s{49.19} id \.{\defeq} Head ( MessageBox [ p ] ) [ 2 ]}%
 \@x{\@s{49.19} msg \.{\defeq} Head ( MessageBox [ p ] ) [ 1 ]}%
@@ -881,8 +880,8 @@ The \textit{SendMessage} function updates the MessageBox of a process with a Mes
  {\bang} [ p ] \.{=} Tail ( MessageBox [ p ] ) ]}%
 \@x{\@s{82.53} \.{\lor} \.{\land} p \.{<} id}%
 \@y{\@s{0}%
- If \ensuremath{p \.{<} id} send probe to neighbour
-}%
+ If \ensuremath{p \.{<} id} send probe to \ensuremath{neighbour
+}}%
 \@xx{}%
  \@x{\@s{93.64} \.{\land} SendMessageAndTailMessageBox ( p ,\, Neighbour ( p )
  ,\, id ,\,\@w{PROBE} )}%
@@ -893,8 +892,9 @@ The \textit{SendMessage} function updates the MessageBox of a process with a Mes
 \@xx{}%
 \@x{\@s{71.42} \.{\land} \.{\lor} \.{\land} p \.{\neq} id}%
 \@y{\@s{0}%
- If \ensuremath{p \.{\neq} id}, then send \ensuremath{SELECTED} to neighbour
-}%
+ If \ensuremath{p \.{\neq} id}, then send \ensuremath{SELECTED} to
+ \ensuremath{neighbour
+}}%
 \@xx{}%
  \@x{\@s{93.64} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
  Leader \.{=} id ,\, {\bang} [ p ] . Participating \.{=} {\FALSE} ]}%
@@ -941,20 +941,23 @@ In case the msg is \textit{selected} we do not need to check whether or not the 
   \tlatex
 
 \@x{}\moduleLeftDash\@xx{CheckLeader}\moduleRightDash\@xx{}%
-\@x{ CheckLeader ( p ) \.{\defeq} \.{\land} State [ p ] . Condition
-\.{=}\@w{Active}}%
-\@x{\@s{87.92} \.{\land} State [ State [ p ] . Leader ] . Condition
-\.{=}\@w{Dead}}%
+
+ \@x{ CheckLeader ( p ) \.{\defeq} \.{\land} State [ p ] . Condition
+ \.{=}\@w{Active}}%
+ \@x{\@s{87.92} \.{\land} State [ State [ p ] . Leader ] . Condition
+ \.{=}\@w{Dead}}%
+\@x{\@s{87.92} \.{\land} State [ p ] . Participating \.{=} {\FALSE}}%
 \@x{\@s{87.92} \.{\land} \.{\lor} \.{\land} MaxAliveID \.{=} 1}%
-\@x{\@s{110.15} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
-Leader \.{=} p ,\, {\bang} [ p ] . Participating \.{=} {\FALSE} ]}%
+ \@x{\@s{110.15} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Leader \.{=} p ,\, {\bang} [ p ] . Participating \.{=} {\FALSE} ]}%
 \@x{\@s{110.15} \.{\land} {\UNCHANGED} MessageBox}%
 \@x{\@s{99.04} \.{\lor} \.{\land} MaxAliveID \.{\neq} 1}%
-\@x{\@s{110.15} \.{\land} SendMessage ( Neighbour ( p ) ,\, p ,\,\@w{PROBE}
-)}%
-\@x{\@s{110.15} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
-Participating \.{=} {\TRUE} ]}%
-\@xx{}%
+ \@x{\@s{110.15} \.{\land} SendMessage ( Neighbour ( p ) ,\, p ,\,\@w{PROBE}
+ )}%
+ \@x{\@s{110.15} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [ p ] .
+ Participating \.{=} {\TRUE} ]}%
+
+
 \@x{}\bottombar\@xx{}%
 
   \caption{CheckLeader}
@@ -968,8 +971,10 @@ When we check if the leader is dead in the Ring Algorithm (Figure \ref{ringcheck
 
 \begin{figure}
 \tlatex
-\@x{}\moduleLeftDash\@xx{Next state relation and Kill Leader}\moduleRightDash\@xx{}%
-  \@x{ KillLeader \.{\defeq}}%
+
+\@x{}\moduleLeftDash\@xx{Next State Relation and Kill Leader}\moduleRightDash\@xx{}%
+
+\@x{ KillLeader \.{\defeq}}%
 \@x{\@s{12.29} \.{\land} State [ MaxAliveID ] . Leader \.{=} MaxAliveID}%
  \@x{\@s{12.29} \.{\land} State \.{'} \.{=} [ State {\EXCEPT} {\bang} [
  MaxAliveID ] . Condition \.{=}\@w{Dead} ]}%
@@ -980,6 +985,7 @@ When we check if the leader is dead in the Ring Algorithm (Figure \ref{ringcheck
 \@x{ Next \.{\defeq} \.{\lor} KillLeader}%
  \@x{\@s{39.83} \.{\lor} \E\, p \.{\in} 1 \.{\dotdot} MaxAliveID \.{:}
  HandleMessages ( p ) \.{\lor} CheckLeader ( p )}%
+
 \@x{}\bottombar\@xx{}%
 
 \caption{Next state relation and KillLeader}
@@ -994,6 +1000,7 @@ KillLeader and the next state relation (Figure \ref{ringnextleader}) are identic
   \tlatex
 \@x{}\moduleLeftDash\@xx{Invariants and Properties}\moduleRightDash\@xx{}%
 
+\@x{}%
 \@y{%
  Invariants
 }%
@@ -1037,6 +1044,10 @@ KillLeader and the next state relation (Figure \ref{ringnextleader}) are identic
  Participating \.{\leadsto} ( {\Diamond} ( State [ p ] . Participating \.{=}
  {\FALSE} ) )}%
 \@pvspace{8.0pt}%
+\@x{ HighestAliveProcessIsLeader \.{\defeq} \A\, p \.{\in} ProcessID \.{:}}%
+\@x{\@s{16.4} State [ p ] . Participating \.{=} {\FALSE} \.{\implies}}%
+ \@x{\@s{28.69} ( State [ MaxAliveID ] . Condition \.{=}\@w{Active}
+ \.{\implies} State [ p ] . Leader \.{=} MaxAliveID )}%
 
 
 \@x{}\bottombar\@xx{}%
