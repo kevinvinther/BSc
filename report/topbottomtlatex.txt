@@ -1,3 +1,0 @@
-\@x{}\moduleLeftDash\@xx{Invariants and Properties}\moduleRightDash\@xx{}%
-
-\@x{}\bottombar\@xx{}%
